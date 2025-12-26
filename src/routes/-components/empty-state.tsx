@@ -1,6 +1,4 @@
-import {
-  useSetIsDeckSelectorOpen,
-} from '@/stores/app-state-store'
+import { useSetIsDeckSelectorOpen } from '@/stores/app-state-store'
 import { useLiveQuery } from 'dexie-react-hooks'
 import db from '@/lib/db'
 
@@ -55,12 +53,12 @@ export function EmptyState() {
           {hasDecks && (
             <button
               onClick={() => setIsDeckSelectorOpen(true)}
-              className="group relative w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-[1.03] active:scale-95 transition-all duration-300"
+              className="group relative w-auto px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-xl shadow-primary/20 sm:w-auto sm:px-8 sm:py-4 sm:rounded-2xl hover:scale-[1.03] active:scale-95 transition-all duration-300"
             >
-              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity" />
-              <div className="relative flex items-center justify-center gap-2">
+              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 rounded-xl sm:rounded-2xl transition-opacity" />
+              <div className="relative flex items-center justify-center gap-2 text-sm sm:text-base">
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 sm:w-5 sm:h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
