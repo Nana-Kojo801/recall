@@ -10,25 +10,34 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEffect, useState } from 'react'
+import {
+  useHandleReturnToDeckSelector,
+  useSelectedEditDeckId,
+  useSetSelectedEditDeckId,
+} from '@/stores/app-state-store'
+import db from '@/lib/db'
+import { useLiveQuery } from 'dexie-react-hooks'
 
 interface EditDeckModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCancel?: () => void
-  initialName?: string
 }
 
-export function EditDeckModal({
-  open,
-  onOpenChange,
-  onCancel,
-  initialName = '',
-}: EditDeckModalProps) {
-  const [name, setName] = useState(initialName)
+export function EditDeckModal({ open, onOpenChange }: EditDeckModalProps) {
+  const handleReturnToDeckSelector = useHandleReturnToDeckSelector()
+  const selectedEditDeckId = useSelectedEditDeckId()
+  const setSelectedEditDeckId = useSetSelectedEditDeckId()
+
+ const selectedDeck = useLiveQuery(
+    () => selectedEditDeckId ? db.decks.get(selectedEditDeckId) : undefined,
+    [selectedEditDeckId],
+  )
+
+  const [name, setName] = useState(selectedDeck?.name || '')
 
   useEffect(() => {
-    setName(initialName)
-  }, [initialName, open])
+    setName(selectedDeck?.name || '')
+  }, [selectedDeck?.name])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -61,14 +70,22 @@ export function EditDeckModal({
           <Button
             variant="outline"
             onClick={() => {
+              setSelectedEditDeckId(null)
               onOpenChange(false)
-              onCancel?.()
+              handleReturnToDeckSelector()
             }}
             className="min-w-[100px]"
           >
             Cancel
           </Button>
-          <Button onClick={() => onOpenChange(false)} className="min-w-[100px]">
+          <Button
+            onClick={() => {
+              onOpenChange(false)
+              db.decks.update(selectedEditDeckId!, { name })
+              handleReturnToDeckSelector()
+            }}
+            className="min-w-[100px]"
+          >
             Save Changes
           </Button>
         </DialogFooter>

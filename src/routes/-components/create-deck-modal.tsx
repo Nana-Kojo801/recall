@@ -9,18 +9,20 @@ import {
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useHandleReturnToDeckSelector } from '@/stores/app-state-store'
+import { useState } from 'react'
+import db from '@/lib/db'
 
 interface CreateDeckModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCancel?: () => void
 }
 
-export function CreateDeckModal({
-  open,
-  onOpenChange,
-  onCancel,
-}: CreateDeckModalProps) {
+export function CreateDeckModal({ open, onOpenChange }: CreateDeckModalProps) {
+  const handleReturnToDeckSelector = useHandleReturnToDeckSelector()
+
+  const [name, setName] = useState('')
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -44,6 +46,8 @@ export function CreateDeckModal({
               placeholder="e.g., Spanish Vocabulary, Chemistry Facts..."
               className="w-full"
               autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
               Choose a descriptive name for your deck
@@ -56,13 +60,21 @@ export function CreateDeckModal({
             variant="outline"
             onClick={() => {
               onOpenChange(false)
-              onCancel?.()
+              handleReturnToDeckSelector()
             }}
             className="min-w-[100px]"
           >
             Cancel
           </Button>
-          <Button onClick={() => onOpenChange(false)} className="min-w-[100px]">
+          <Button
+            onClick={() => {
+              onOpenChange(false)
+              db.decks.add({ name })
+              setName('')
+              handleReturnToDeckSelector()
+            }}
+            className="min-w-[100px]"
+          >
             Create Deck
           </Button>
         </DialogFooter>

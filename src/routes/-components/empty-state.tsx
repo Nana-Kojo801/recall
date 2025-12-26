@@ -1,11 +1,18 @@
-interface EmptyStateProps {
-  onAddCardClick: () => void
-}
+import {
+  useSetIsDeckSelectorOpen,
+} from '@/stores/app-state-store'
+import { useLiveQuery } from 'dexie-react-hooks'
+import db from '@/lib/db'
 
-export function EmptyState({ onAddCardClick }: EmptyStateProps) {
+export function EmptyState() {
+  const setIsDeckSelectorOpen = useSetIsDeckSelectorOpen()
+
+  const decks = useLiveQuery(() => db.decks.toArray())
+  const hasDecks = decks && decks.length > 0
+
   return (
-    <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 sm:py-20">
-      <div className="max-w-lg text-center space-y-6 sm:space-y-8 w-full">
+    <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 sm:py-20 bg-background/50">
+      <div className="max-w-lg text-center space-y-6 sm:space-y-10 w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
         {/* Animated Icon with Rings */}
         <div className="relative inline-flex items-center justify-center scale-90 sm:scale-100">
           {/* Animated pulsing rings */}
@@ -33,113 +40,55 @@ export function EmptyState({ onAddCardClick }: EmptyStateProps) {
 
         {/* Content */}
         <div className="space-y-3 sm:space-y-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            Your deck is empty
+          <h2 className="text-2xl sm:text-4xl font-black text-foreground tracking-tight">
+            No Deck Selected
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-sm sm:max-w-md mx-auto">
-            Start building your knowledge base by creating your first flashcard.
-            <span className="block mt-1 sm:mt-2 text-xs sm:text-sm italic">
-              "Every expert was once a beginner."
-            </span>
+          <p className="text-sm sm:text-lg text-muted-foreground leading-relaxed max-w-sm sm:max-w-md mx-auto">
+            {hasDecks
+              ? 'Your learning journey is waiting. Choose an existing deck to continue or create something new.'
+              : 'Ready to start learning? Create your first deck and begin your recall journey today.'}
           </p>
         </div>
 
-        {/* CTA Button */}
-        <div className="flex flex-col items-center gap-3 sm:gap-4">
-          <button
-            onClick={onAddCardClick}
-            className="group relative inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm sm:text-base hover:shadow-2xl hover:shadow-primary/40 transition-all hover:-translate-y-1 hover:scale-105"
-          >
-            {/* Button glow */}
-            <div className="absolute -inset-1.5 bg-primary/40 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-
-            <span className="relative flex items-center gap-2 sm:gap-3">
-              <svg
-                className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-90 transition-transform duration-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Create Your First Card
-            </span>
-          </button>
-
-          {/* Secondary action */}
-          <button className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors underline decoration-dotted underline-offset-4">
-            or import from a file
-          </button>
-        </div>
-
-        {/* Feature hints */}
-        <div className="pt-6 sm:pt-8 grid grid-cols-3 gap-3 sm:gap-4 max-w-sm sm:max-w-md mx-auto">
-          <div className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg bg-muted/30 border border-border/50">
-            <svg
-              className="w-4 h-4 sm:w-5 sm:h-5 text-primary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pt-2">
+          {hasDecks && (
+            <button
+              onClick={() => setIsDeckSelectorOpen(true)}
+              className="group relative w-full sm:w-auto px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-[1.03] active:scale-95 transition-all duration-300"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-            <span className="text-[9px] sm:text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">
-              Fast Review
-            </span>
-          </div>
-
-          <div className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg bg-muted/30 border border-border/50">
-            <svg
-              className="w-4 h-4 sm:w-5 sm:h-5 text-primary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-              />
-            </svg>
-            <span className="text-[9px] sm:text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">
-              Tags
-            </span>
-          </div>
-
-          <div className="flex flex-col items-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-lg bg-muted/30 border border-border/50">
-            <svg
-              className="w-4 h-4 sm:w-5 sm:h-5 text-primary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-            <span className="text-[9px] sm:text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">
-              Progress
-            </span>
-          </div>
+              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity" />
+              <div className="relative flex items-center justify-center gap-2">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+                Select From Your Decks
+              </div>
+            </button>
+          )}
         </div>
 
         {/* Pro tip */}
-        <p className="text-[10px] sm:text-xs text-muted-foreground/70 pt-2 sm:pt-4">
-          💡 Pro tip: Use keyboard shortcuts for lightning-fast reviews
+        <p className="text-[10px] sm:text-xs text-muted-foreground/50 pt-4 sm:pt-6 font-medium">
+          💡 Pro tip: Use{' '}
+          <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border inline-flex text-[9px]">
+            Space
+          </kbd>{' '}
+          and{' '}
+          <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border inline-flex text-[9px]">
+            1-2
+          </kbd>{' '}
+          for faster reviews
         </p>
       </div>
     </div>

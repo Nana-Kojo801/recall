@@ -1,139 +1,129 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
 import { Header } from './-components/header'
 import { StatsBar } from './-components/stats-bar'
 import { FlashcardViewer } from './-components/flashcard-viewer'
-import { ReviewActions } from './-components/review-actions'
 import { EmptyState } from './-components/empty-state'
-import { Footer } from './-components/footer'
 import { AddCardModal } from './-components/add-card-modal'
 import { DeckSelectorModal } from './-components/deck-selector-modal'
 import { CreateDeckModal } from './-components/create-deck-modal'
 import { EditDeckModal } from './-components/edit-deck-modal'
 import { EditCardModal } from './-components/edit-card-modal'
-import { DeleteConfirmModal } from './-components/delete-confirm-modal'
+import { DeleteDeckConfirmModal } from './-components/delete-deck-confirm-modal'
+import { DeleteCardConfirmModal } from './-components/delete-card-confirm-modal'
+import db from '@/lib/db'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { StatsBarSkeleton } from './-components/stats-bar-skeleton'
+import { FlashcardViewerSkeleton } from './-components/flashcard-viewer-skeleton'
+import {
+  useIsCreateDeckModalOpen,
+  useSetIsCreateDeckModalOpen,
+  useSelectedDeckId,
+  useIsDeckSelectorOpen,
+  useSetIsDeckSelectorOpen,
+  useIsEditDeckModalOpen,
+  useSetIsEditDeckModalOpen,
+  useIsEditCardModalOpen,
+  useSetIsEditCardModalOpen,
+  useIsDeleteDeckConfirmModalOpen,
+  useSetIsDeleteDeckConfirmModalOpen,
+  useIsDeleteCardConfirmModalOpen,
+  useSetIsDeleteCardConfirmModalOpen,
+  useIsCardModalOpen,
+  useSetIsCardModalOpen,
+} from '@/stores/app-state-store'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  // UI State - bare minimum for modal interactions
-  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false)
-  const [isDeckSelectorOpen, setIsDeckSelectorOpen] = useState(false)
+  const setIsCreateDeckModalOpen = useSetIsCreateDeckModalOpen()
+  const isCreateDeckModalOpen = useIsCreateDeckModalOpen()
 
-  // Deck Actions State
-  const [isCreateDeckModalOpen, setIsCreateDeckModalOpen] = useState(false)
-  const [isEditDeckModalOpen, setIsEditDeckModalOpen] = useState(false)
-  const [isDeleteDeckConfirmOpen, setIsDeleteDeckConfirmOpen] = useState(false)
-  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null)
+  const isEditDeckModalOpen = useIsEditDeckModalOpen()
+  const setIsEditDeckModalOpen = useSetIsEditDeckModalOpen()
 
-  // Card Actions State
-  const [isEditCardModalOpen, setIsEditCardModalOpen] = useState(false)
-  const [isDeleteCardConfirmOpen, setIsDeleteCardConfirmOpen] = useState(false)
+  const isCardModalOpen = useIsCardModalOpen()
+  const setIsCardModalOpen = useSetIsCardModalOpen()
 
-  // Toggle between empty state and flashcard view for demo
-  // Set to false to see empty state, true to see flashcard interface
-  const hasCards = true
+  const isEditCardModalOpen = useIsEditCardModalOpen()
+  const setIsEditCardModalOpen = useSetIsEditCardModalOpen()
 
-  // Deck Action Handlers
-  const handleCreateDeckClick = () => {
-    setIsDeckSelectorOpen(false)
-    setIsCreateDeckModalOpen(true)
-  }
+  const isDeleteDeckConfirmModalOpen = useIsDeleteDeckConfirmModalOpen()
+  const setIsDeleteDeckConfirmModalOpen = useSetIsDeleteDeckConfirmModalOpen()
 
-  const handleEditDeck = (id: string) => {
-    setSelectedDeckId(id)
-    setIsDeckSelectorOpen(false)
-    setIsEditDeckModalOpen(true)
-  }
+  const isDeleteCardConfirmModalOpen = useIsDeleteCardConfirmModalOpen()
+  const setIsDeleteCardConfirmModalOpen = useSetIsDeleteCardConfirmModalOpen()
 
-  const handleDeleteDeck = (id: string) => {
-    setSelectedDeckId(id)
-    setIsDeckSelectorOpen(false) // Optionally keep it open and overlay, but closing is cleaner for now
-    setIsDeleteDeckConfirmOpen(true)
-  }
+  const selectedDeckId = useSelectedDeckId()
+  const isDeckSelectorOpen = useIsDeckSelectorOpen()
+  const setIsDeckSelectorOpen = useSetIsDeckSelectorOpen()
 
-  const handleReturnToDeckSelector = () => {
-    setIsDeckSelectorOpen(true)
-  }
+  const deck = useLiveQuery(() =>
+    selectedDeckId ? db.decks.get(selectedDeckId) : undefined,
+  [selectedDeckId])
+  const cards = useLiveQuery(() =>
+    selectedDeckId
+      ? db.cards.where('deckId').equals(selectedDeckId).toArray()
+      : [],
+  [selectedDeckId])
 
-  // Card Action Handlers
-  const handleEditCard = () => {
-    setIsEditCardModalOpen(true)
-  }
-
-  const handleDeleteCard = () => {
-    setIsDeleteCardConfirmOpen(true)
-  }
+  const isLoading =
+    selectedDeckId && (deck === undefined || cards === undefined)
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header onDeckSelectorClick={() => setIsDeckSelectorOpen(true)} />
+      <Header />
 
-      {hasCards ? (
-        <>
-          <StatsBar onAddCardClick={() => setIsAddCardModalOpen(true)} />
+      {selectedDeckId ? (
+        isLoading ? (
+          <>
+            <StatsBarSkeleton />
+            <main className="flex-1 flex flex-col items-center justify-center py-8 sm:py-12 md:py-16 px-4">
+              <FlashcardViewerSkeleton />
+            </main>
+          </>
+        ) : (
+          <>
+            <StatsBar />
 
-          <main className="flex-1 flex flex-col items-center justify-center py-8 sm:py-12 md:py-16 px-4">
-            <FlashcardViewer
-              onEditCard={handleEditCard}
-              onDeleteCard={handleDeleteCard}
-            />
-            <ReviewActions />
-          </main>
-        </>
+            <main className="flex-1 flex flex-col items-center justify-center py-8 sm:py-12 md:py-16 px-4">
+              <FlashcardViewer />
+            </main>
+          </>
+        )
       ) : (
-        <EmptyState onAddCardClick={() => setIsAddCardModalOpen(true)} />
+        <EmptyState />
       )}
-
-      <Footer />
-
       {/* --- Modals --- */}
 
       {/* Deck Management */}
       <DeckSelectorModal
         open={isDeckSelectorOpen}
         onOpenChange={setIsDeckSelectorOpen}
-        onCreateDeckClick={handleCreateDeckClick}
-        onEditDeck={handleEditDeck}
-        onDeleteDeck={handleDeleteDeck}
       />
       <CreateDeckModal
         open={isCreateDeckModalOpen}
         onOpenChange={setIsCreateDeckModalOpen}
-        onCancel={handleReturnToDeckSelector}
       />
       <EditDeckModal
         open={isEditDeckModalOpen}
         onOpenChange={setIsEditDeckModalOpen}
-        onCancel={handleReturnToDeckSelector}
-        initialName="General" // Mock data
       />
-      <DeleteConfirmModal
-        open={isDeleteDeckConfirmOpen}
-        onOpenChange={setIsDeleteDeckConfirmOpen}
-        title="Delete Deck"
-        description="Are you sure you want to delete this deck? This action cannot be undone and all cards inside will be lost."
-        onConfirm={handleReturnToDeckSelector} // Return to list after delete
-        onCancel={handleReturnToDeckSelector} // Return to list if cancelled
+      <DeleteDeckConfirmModal
+        open={isDeleteDeckConfirmModalOpen}
+        onOpenChange={setIsDeleteDeckConfirmModalOpen}
       />
 
       {/* Card Management */}
-      <AddCardModal
-        open={isAddCardModalOpen}
-        onOpenChange={setIsAddCardModalOpen}
-      />
+      <AddCardModal open={isCardModalOpen} onOpenChange={setIsCardModalOpen} />
       <EditCardModal
         open={isEditCardModalOpen}
         onOpenChange={setIsEditCardModalOpen}
       />
-      <DeleteConfirmModal
-        open={isDeleteCardConfirmOpen}
-        onOpenChange={setIsDeleteCardConfirmOpen}
-        title="Delete Flashcard"
-        description="Are you sure you want to delete this flashcard? This action cannot be undone."
-        onConfirm={() => {}} // No-op for UI demo
+      <DeleteCardConfirmModal
+        open={isDeleteCardConfirmModalOpen}
+        onOpenChange={setIsDeleteCardConfirmModalOpen}
       />
     </div>
   )

@@ -1,20 +1,126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="theme-color" content="#000000" />
+    <link rel="icon" href="/favicon.png" />
+    <meta name="theme-color" content="#7c3aed" />
     <meta
       name="description"
-      content="Web site created using create-tsrouter-app"
+      content="Recall is a premium flashcard application designed for focused learning. Master any subject with our minimal, distraction-free interface and smart review features."
     />
-    <link rel="apple-touch-icon" href="/logo192.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Recall | Minimal & Focused Flashcards" />
+    <meta
+      property="og:description"
+      content="Master any subject with Recall. A sleek, focused flashcard app designed for deep learning and long-term retention."
+    />
+    <meta property="og:site_name" content="Recall" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Recall | Minimal & Focused Flashcards"
+    />
+    <meta
+      name="twitter:description"
+      content="Focused flashcards for deep learning."
+    />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
     <link rel="manifest" href="/manifest.json" />
-    <title>Create TanStack App - recall</title>
+    <title>Recall | Minimal & Focused Flashcards</title>
   </head>
-  <body>
-    <div id="app"></div>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    "
+  >
+    <div
+      id="loading-screen"
+      style="
+        width: 100vw;
+        height: 100dvh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+      "
+    >
+      <img
+        id="loading-logo"
+        src="/icon-192x192.png"
+        alt="Recall Logo"
+        style="
+          width: 80px;
+          height: 80px;
+          border-radius: 1.25rem;
+          box-shadow: 0 20px 40px -10px rgba(124, 58, 237, 0.4);
+        "
+      />
+      <h1
+        id="loading-title"
+        style="
+          font-size: 1.5rem;
+          font-weight: 800;
+          margin: 1.5rem 0 0 0;
+          letter-spacing: -0.05em;
+        "
+      >
+        Recall
+      </h1>
+    </div>
+
+    <div id="app" style="display: none"></div>
+
+    <style>
+      /* App state management */
+      .app-loaded #loading-screen {
+        display: none !important;
+      }
+
+      .app-loaded #app {
+        display: block !important;
+      }
+    </style>
+
+    <script>
+      ;(function () {
+        try {
+          const theme = localStorage.getItem('theme') || 'system'
+          const systemDark = window.matchMedia(
+            '(prefers-color-scheme: dark)',
+          ).matches
+
+          let isDark = false
+          if (theme === 'dark') {
+            isDark = true
+          } else if (theme === 'light') {
+            isDark = false
+          } else {
+            isDark = systemDark
+          }
+
+          const screen = document.getElementById('loading-screen')
+          const title = document.getElementById('loading-title')
+
+          if (isDark) {
+            screen.style.backgroundColor = '#0f0f0f'
+            title.style.color = '#f3f4f6'
+            document.documentElement.classList.add('dark')
+          } else {
+            screen.style.backgroundColor = '#fafafa'
+            title.style.color = '#1f2937'
+            document.documentElement.classList.remove('dark')
+          }
+        } catch (e) {}
+      })()
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

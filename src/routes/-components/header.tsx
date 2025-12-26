@@ -1,8 +1,24 @@
-interface HeaderProps {
-  onDeckSelectorClick: () => void
-}
+import { Plus, ChevronDown, Layers, Sun, Moon } from 'lucide-react'
+import {
+  useSelectedDeckId,
+  useSetIsDeckSelectorOpen,
+} from '@/stores/app-state-store'
+import { useTheme } from 'next-themes'
+import { useLiveQuery } from 'dexie-react-hooks'
+import db from '@/lib/db'
+import { Skeleton } from '@/components/ui/skeleton'
 
-export function Header({ onDeckSelectorClick }: HeaderProps) {
+export function Header() {
+  const { setTheme, theme } = useTheme()
+  const setIsDeckSelectorOpen = useSetIsDeckSelectorOpen()
+  const selectedDeckId = useSelectedDeckId()
+
+  const allDecks = useLiveQuery(() => db.decks.toArray())
+  const deck = useLiveQuery(
+    () => selectedDeckId ? db.decks.get(selectedDeckId) : undefined,
+    [selectedDeckId],
+  )
+
   return (
     <header className="relative border-b border-border/50 backdrop-blur-sm bg-background/80">
       <div className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between max-w-7xl mx-auto">
@@ -39,30 +55,33 @@ export function Header({ onDeckSelectorClick }: HeaderProps) {
 
           {/* Deck Selector - Compact Dropdown */}
           <div className="hidden md:flex items-center gap-2 ml-4 sm:ml-6 pl-4 sm:pl-6 border-l border-border/50">
-            <button
-              onClick={onDeckSelectorClick}
-              className="group flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-muted/50 transition-all"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary" />
-                <span className="text-xs sm:text-sm font-medium text-foreground">
-                  General
-                </span>
-              </div>
-              <svg
-                className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground group-hover:text-foreground transition-colors"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {allDecks === undefined ||
+            (selectedDeckId && deck === undefined) ? (
+              <Skeleton className="h-8 w-32 rounded-lg" />
+            ) : allDecks.length === 0 ? (
+              <button
+                onClick={() => setIsDeckSelectorOpen(true)}
+                className="group flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 transition-all border border-primary/20"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
+                <Plus className="w-3.5 h-3.5 text-primary" />
+                <span className="text-sm font-medium text-primary shadow-sm">
+                  Create deck
+                </span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsDeckSelectorOpen(true)}
+                className="group flex items-center gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg hover:bg-muted/50 transition-all border border-transparent hover:border-border/50"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+                  <span className="text-xs sm:text-sm font-medium text-foreground">
+                    {deck ? deck.name : 'Select deck'}
+                  </span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -70,39 +89,22 @@ export function Header({ onDeckSelectorClick }: HeaderProps) {
         <div className="flex items-center gap-1 sm:gap-2">
           {/* Mobile deck selector */}
           <button
-            onClick={onDeckSelectorClick}
+            onClick={() => setIsDeckSelectorOpen(true)}
             className="md:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-lg hover:bg-muted/50 transition-colors flex items-center justify-center group"
           >
-            <svg
-              className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground group-hover:text-foreground transition-colors"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-              />
-            </svg>
+            <Layers className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
           </button>
 
           {/* Theme toggle */}
-          <button className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg hover:bg-muted/50 transition-colors flex items-center justify-center group">
-            <svg
-              className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground group-hover:text-foreground transition-colors"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-              />
-            </svg>
+          <button
+            onClick={() => {
+              setTheme(theme === 'dark' ? 'light' : 'dark')
+            }}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg hover:bg-muted/50 transition-colors flex items-center justify-center group relative overflow-hidden"
+          >
+            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-muted-foreground group-hover:text-foreground" />
+            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-muted-foreground group-hover:text-foreground" />
+            <span className="sr-only">Toggle theme</span>
           </button>
         </div>
       </div>
