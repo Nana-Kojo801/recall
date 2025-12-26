@@ -15,7 +15,7 @@ export function Header() {
 
   const allDecks = useLiveQuery(() => db.decks.toArray())
   const deck = useLiveQuery(
-    () => selectedDeckId ? db.decks.get(selectedDeckId) : undefined,
+    () => (selectedDeckId ? db.decks.get(selectedDeckId) : undefined),
     [selectedDeckId],
   )
 
@@ -90,9 +90,16 @@ export function Header() {
           {/* Mobile deck selector */}
           <button
             onClick={() => setIsDeckSelectorOpen(true)}
-            className="md:hidden w-8 h-8 sm:w-9 sm:h-9 rounded-lg hover:bg-muted/50 transition-colors flex items-center justify-center group"
+            className="md:hidden flex items-center gap-2 px-2.5 h-8 sm:h-9 rounded-lg hover:bg-muted/50 transition-colors group border border-transparent hover:border-border/50"
           >
-            <Layers className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              {deck && (
+                <span className="text-xs font-medium text-foreground max-w-[100px] truncate">
+                  {deck.name}
+                </span>
+              )}
+            </div>
           </button>
 
           {/* Theme toggle */}

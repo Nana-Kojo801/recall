@@ -13,7 +13,7 @@ function RootComponent() {
   }, [])
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <Outlet />
     </ThemeProvider>
   )

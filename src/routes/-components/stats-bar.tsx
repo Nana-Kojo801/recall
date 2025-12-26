@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import {
   useSelectedDeckId,
   useSetIsCardModalOpen,
@@ -81,24 +82,12 @@ export function StatsBar() {
           {/* Right: Add Card Button */}
           <button
             onClick={() => setIsCardModalOpen(true)}
-            className="group relative px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-xs sm:text-sm hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 self-start sm:self-auto whitespace-nowrap"
+            className="group relative h-9 px-3 sm:px-4 sm:py-2 rounded-lg bg-primary text-primary-foreground font-semibold text-xs sm:text-sm hover:bg-primary/90 transition-all hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 flex items-center justify-center shrink-0"
           >
             <div className="absolute -inset-0.5 bg-primary/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur-md -z-10" />
             <span className="flex items-center gap-1.5">
-              <svg
-                className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:rotate-90 transition-transform duration-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Add Card
+              <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+              <span>Add Card</span>
             </span>
           </button>
         </div>
