@@ -1,0 +1,225 @@
+import { useRef, useState } from "react";
+import { useMutation, useAction } from "convex/react";
+import { api } from "@/../convex/_generated/api";
+import type { Id } from "@/../convex/_generated/dataModel";
+import { motion, AnimatePresence } from "framer-motion";
+import { extractTextFromFile } from "@/lib/openrouter/client";
+
+interface UploadAreaProps {
+  topicId: Id<"topics">;
+}
+
+type UploadStatus = "idle" | "reading" | "uploading" | "generating" | "done" | "error";
+
+export function UploadArea({ topicId }: UploadAreaProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [status, setStatus] = useState<UploadStatus>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [cardCount, setCardCount] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [focusHint, setFocusHint] = useState("");
+  const [maxCards, setMaxCards] = useState<number>(0);
+
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const createUploadRecord = useMutation(api.files.createUploadRecord);
+  const generateFlashcards = useAction(api.ai.generateFlashcards);
+
+  const processFile = async (file: File) => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!["pdf", "pptx", "docx", "txt"].includes(ext ?? "")) {
+      setStatus("error");
+      setErrorMsg("Unsupported file type. Use PDF, PPTX, DOCX, or TXT.");
+      return;
+    }
+    setStatus("reading");
+    setErrorMsg("");
+    try {
+      const text = await extractTextFromFile(file);
+      setStatus("uploading");
+      const uploadUrl = await generateUploadUrl();
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!uploadRes.ok) throw new Error("Upload failed");
+      const { storageId } = await uploadRes.json();
+      const uploadId = await createUploadRecord({ topicId, fileName: file.name, fileSize: file.size, storageId });
+      setStatus("generating");
+      const fronts = await generateFlashcards({
+        topicId,
+        uploadId,
+        text,
+        focusHint: focusHint.trim() || undefined,
+        maxCards: maxCards > 0 ? maxCards : undefined,
+      });
+      setCardCount(fronts.length);
+      setStatus("done");
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  };
+
+  const isActive = ["reading", "uploading", "generating"].includes(status);
+  const isIdle = status === "idle";
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Focus hint textarea */}
+      {isIdle && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div>
+            <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#8A8278", textTransform: "uppercase", marginBottom: 6 }}>
+              Focus hint (optional)
+            </label>
+            <textarea
+              value={focusHint}
+              onChange={(e) => setFocusHint(e.target.value)}
+              placeholder='e.g. "Focus on definitions" or "Prioritize key differences"'
+              rows={2}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "2px solid rgba(28,25,23,0.2)", background: "#fff", fontFamily: "var(--font-sans)", fontSize: 13, color: "#1C1917", resize: "none", outline: "none", lineHeight: 1.4, boxSizing: "border-box" }}
+              onFocus={(e) => (e.target.style.borderColor = "#1C1917")}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(28,25,23,0.2)")}
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#8A8278", textTransform: "uppercase", marginBottom: 6 }}>
+              Max flashcards (optional)
+            </label>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input
+                type="number"
+                min={1}
+                max={300}
+                placeholder="Auto"
+                value={maxCards || ""}
+                onChange={(e) => setMaxCards(Math.max(0, parseInt(e.target.value) || 0))}
+                style={{ width: 90, padding: "8px 10px", borderRadius: 8, border: "2px solid rgba(28,25,23,0.2)", background: "#fff", fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 600, color: "#1C1917", outline: "none" }}
+                onFocus={(e) => (e.target.style.borderColor = "#1C1917")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(28,25,23,0.2)")}
+              />
+              <span style={{ fontSize: 11, color: "#8A8278", fontFamily: "var(--font-mono)" }}>
+                {maxCards > 0 ? `max ${maxCards} cards` : "unlimited (auto)"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drop zone */}
+      <div
+        onClick={() => isIdle && inputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+        className="relative flex flex-col items-center justify-center gap-3 p-8 rounded-[14px] transition-all duration-200"
+        style={{
+          background: dragging ? "rgba(232,72,44,0.06)" : "#fff",
+          border: `2px ${dragging ? "solid" : "dashed"} ${dragging ? "#E8482C" : "#1C1917"}`,
+          boxShadow: dragging ? "4px 4px 0 #E8482C" : "2px 2px 0 rgba(28,25,23,0.15)",
+          cursor: isIdle ? "pointer" : "default",
+        }}
+      >
+        {isActive ? (
+          <>
+            <div className="flex gap-2">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="gen-dot w-2 h-2 rounded-full"
+                  style={{ background: "#E8482C", animationDelay: `${i * 0.2}s` }}
+                />
+              ))}
+            </div>
+            <p
+              className="text-sm font-bold text-center"
+              style={{ fontFamily: "var(--font-mono)", color: "#4A4642" }}
+            >
+              {status === "reading" && "Reading file…"}
+              {status === "uploading" && "Uploading…"}
+              {status === "generating" && "Brewing flashcards with AI…"}
+            </p>
+          </>
+        ) : (
+          <>
+            <div
+              className="w-12 h-12 rounded-[10px] flex items-center justify-center"
+              style={{ background: "#F5EFE2", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917" }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E8482C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+              </svg>
+            </div>
+            <div className="text-center">
+              <p className="font-bold text-sm" style={{ color: "#1C1917" }}>
+                Drop files or click to upload
+              </p>
+              <p
+                className="text-[10px] font-semibold mt-0.5"
+                style={{ fontFamily: "var(--font-mono)", color: "#8A8278" }}
+              >
+                PDF · PPTX · DOCX · TXT
+              </p>
+            </div>
+          </>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf,.pptx,.docx,.txt"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) processFile(f); }}
+          className="hidden"
+        />
+      </div>
+
+      <AnimatePresence>
+        {(status === "done" || status === "error") && (
+          <motion.div
+            className="flex items-center gap-3 px-4 py-3 rounded-[10px]"
+            style={{
+              background: status === "error" ? "rgba(232,72,44,0.1)" : "rgba(43,122,62,0.1)",
+              border: `2px solid ${status === "error" ? "#E8482C" : "#2B7A3E"}`,
+            }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            {status === "done" ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B7A3E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span className="text-sm font-bold flex-1" style={{ color: "#2B7A3E" }}>
+                  {cardCount} flashcards created
+                </span>
+                <button
+                  onClick={() => { setStatus("idle"); setFocusHint(""); setMaxCards(0); }}
+                  className="text-xs font-bold underline"
+                  style={{ color: "#8A8278" }}
+                >
+                  Upload another
+                </button>
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8482C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span className="text-sm font-semibold" style={{ color: "#E8482C" }}>{errorMsg}</span>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Recall — mobile study app</title>
+<template id="__bundler_thumbnail" data-bg-color="#F5EFE2">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect x="360" y="180" width="480" height="440" rx="40" fill="#E8482C" stroke="#1C1917" stroke-width="10"/>
+    <rect x="380" y="200" width="480" height="440" rx="40" fill="#F4B400" stroke="#1C1917" stroke-width="10"/>
+    <text x="620" y="450" font-family="Georgia, serif" font-weight="900" font-size="180" fill="#1C1917" text-anchor="middle">R</text>
+    <path d="M820 250 L835 295 L880 305 L835 315 L820 360 L805 315 L760 305 L805 295 Z" fill="#1C1917"/>
+  </svg>
+</template>
+<link rel="stylesheet" href="styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="browser-window.jsx"></script>
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="variation-pulse.jsx"></script>
+<script type="text/babel" src="variation-kanji.jsx"></script>
+<script type="text/babel" src="variation-block.jsx"></script>
+<script type="text/babel" src="desktop-kanji.jsx"></script>
+
+<script type="text/babel">
+// ─── TWEAKABLE DEFAULTS ───────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentPulse": "#FF3D7F",
+  "accentKanji": "#E8482C",
+  "accentBlock": "#00FF85",
+  "coverStyle": "gradient",
+  "density": "comfy",
+  "showClickThru": true
+}/*EDITMODE-END*/;
+
+const STORAGE_KEY = 'recall-tweaks-v1';
+
+function loadTweaks() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return { ...TWEAK_DEFAULTS, ...JSON.parse(raw) };
+  } catch (e) {}
+  return { ...TWEAK_DEFAULTS };
+}
+
+// ─── App ─────────────────────────────────────────────────────
+function App() {
+  const [tweaks, setTweaks] = React.useState(loadTweaks);
+  const [editMode, setEditMode] = React.useState(false);
+
+  React.useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tweaks));
+  }, [tweaks]);
+
+  // Edit mode protocol
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const d = e && e.data;
+      if (!d || typeof d !== 'object') return;
+      if (d.type === '__activate_edit_mode') setEditMode(true);
+      if (d.type === '__deactivate_edit_mode') setEditMode(false);
+    };
+    window.addEventListener('message', onMsg);
+    // announce AFTER listener is attached
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const setTweak = (k, v) => {
+    setTweaks(prev => ({ ...prev, [k]: v }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+  };
+
+  // Variations
+  const pulseScreens = [
+    { title: 'Onboarding', content: <PulseOnboarding /> },
+    { title: 'Empty State', content: <PulseEmpty /> },
+    { title: 'New Course',  content: <PulseNewCourse /> },
+    { title: 'Home',        content: <PulseHome /> },
+    { title: 'Course Detail', content: <PulseCourseDetail /> },
+    { title: 'Study · Question', content: <PulseStudyFront /> },
+    { title: 'Study · Rate', content: <PulseStudyBack /> },
+    { title: 'Calendar · Conflict', content: <PulseCalendar /> },
+  ];
+  const kanjiScreens = [
+    { title: 'Onboarding', content: <KanjiOnboarding /> },
+    { title: 'Empty State', content: <KanjiEmpty /> },
+    { title: 'New Course',  content: <KanjiNewCourse /> },
+    { title: 'Home',        content: <KanjiHome /> },
+    { title: 'Course Detail', content: <KanjiCourseDetail /> },
+    { title: 'Study · Question', content: <KanjiStudyFront /> },
+    { title: 'Study · Rate', content: <KanjiStudyBack /> },
+    { title: 'Calendar · Conflict', content: <KanjiCalendar /> },
+  ];
+  const blockScreens = [
+    { title: 'Onboarding', content: <BlockOnboarding /> },
+    { title: 'Empty State', content: <BlockEmpty /> },
+    { title: 'New Course',  content: <BlockNewCourse /> },
+    { title: 'Home',        content: <BlockHome /> },
+    { title: 'Course Detail', content: <BlockCourseDetail /> },
+    { title: 'Study · Question', content: <BlockStudyFront /> },
+    { title: 'Study · Rate', content: <BlockStudyBack /> },
+    { title: 'Calendar · Conflict', content: <BlockCalendar /> },
+  ];
+
+  return (
+    <>
+      <DesignCanvas>
+        {/* CANVAS TITLE */}
+        <div style={{ padding: '0 60px 30px', maxWidth: 900 }} data-screen-label="Canvas Title">
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: 2, color: 'rgba(60,50,40,0.6)', marginBottom: 8 }}>RECALL · v1 · APR 2026</div>
+          <div style={{ fontFamily: 'Fraunces, serif', fontSize: 54, fontWeight: 700, lineHeight: 0.95, letterSpacing: -1.5, color: 'rgba(30,20,10,0.9)' }}>
+            Recall — three directions<br/>for a study app.
+          </div>
+          <div style={{ fontFamily: 'DM Sans, system-ui', fontSize: 15, color: 'rgba(60,50,40,0.65)', marginTop: 14, lineHeight: 1.5, maxWidth: 680 }}>
+            A mobile study companion built around AI-generated flashcards, spaced repetition, and a Google Calendar sync. Each row presents the same seven screens in a different visual language. Drag to pan · pinch or scroll to zoom · toggle <strong>Tweaks</strong> to swap accents, covers, and density.
+          </div>
+        </div>
+
+        <DCSection
+          title="A · Pulse"
+          subtitle="Dark surfaces, gradient heroes, neon accents. Feels like a music app — high-intensity, reward-forward."
+          gap={48}
+        >
+          <PhoneRow screens={pulseScreens} labelColor="rgba(40,30,20,0.85)" />
+        </DCSection>
+
+        <DCSection
+          title="B · Kanji"
+          subtitle="Retro Memphis. Cream paper, chunky serif, offset shadows, sticker-energy. Playful but still academic."
+          gap={48}
+        >
+          <PhoneRow screens={kanjiScreens} labelColor="rgba(40,30,20,0.85)" />
+        </DCSection>
+
+        <DCSection
+          title="D · Kanji · Desktop"
+          subtitle="Web companion to direction B. Sidebar nav, dense course board, full-bleed study view, week calendar with conflict resolution."
+          gap={60}
+        >
+          {[
+            { title: 'Home / Today', C: KanjiDesktopHome },
+            { title: 'Course Detail', C: KanjiDesktopCourse },
+            { title: 'Study Session', C: KanjiDesktopStudy },
+            { title: 'Calendar · Conflict', C: KanjiDesktopCalendar },
+            { title: 'New Course', C: KanjiDesktopNewCourse },
+          ].map((s, i) => (
+            <div key={i} data-screen-label={`D${String(i + 1).padStart(2, '0')} ${s.title}`} style={{ flexShrink: 0 }}>
+              <ScreenLabel n={i + 1} title={s.title} />
+              <ChromeWindow tabs={[{ title: 'Recall', active: true }, { title: 'Gmail' }]} activeIndex={0} url={`recall.app/${s.title.toLowerCase().replace(/[^a-z]+/g,'-')}`} width={1240} height={820}>
+                <div style={{ width: 1240, height: 760 - 38, overflow: 'hidden' }}><s.C /></div>
+              </ChromeWindow>
+            </div>
+          ))}
+        </DCSection>
+
+        <DCSection
+          title="C · Block"
+          subtitle="Neo-brutalist color blocks. Magazine-scale serif numerals and all-caps mono. Most opinionated — loudest."
+          gap={48}
+        >
+          <PhoneRow screens={blockScreens} labelColor="rgba(40,30,20,0.85)" />
+        </DCSection>
+
+        {/* system notes */}
+        <div style={{ padding: '0 60px 40px', maxWidth: 900 }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: 2, color: 'rgba(60,50,40,0.6)', marginBottom: 10 }}>SYSTEM NOTES</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+            {[
+              { h: 'Spaced repetition intervals', b: 'Hard → <10 min · Okay → 2 days · Easy → 9 days. Intervals grow multiplicatively as mastery climbs; struggle cards resurface sooner.' },
+              { h: 'Google Calendar integration', b: 'Study sessions are written as events. On conflict, app scans ±2 hrs for the next free slot and offers to shift. Visible across all three calendar screens.' },
+              { h: 'AI flashcard generation', b: 'PDF/slides → chunked → question-answer pairs with source citations. Animated "generating" state anchored to the course detail view.' },
+            ].map((n, i) => (
+              <div key={i} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, padding: 16 }}>
+                <div style={{ fontFamily: 'DM Sans', fontSize: 14, fontWeight: 700, color: 'rgba(30,20,10,0.9)', marginBottom: 6 }}>{n.h}</div>
+                <div style={{ fontFamily: 'DM Sans', fontSize: 12.5, color: 'rgba(60,50,40,0.75)', lineHeight: 1.5 }}>{n.b}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <DCPostIt top={120} right={40} rotate={3}>
+          Tweaks → swap accents per direction, toggle density, explore cover styles.
+        </DCPostIt>
+      </DesignCanvas>
+
+      {/* Tweaks panel */}
+      {editMode && (
+        <TweaksPanel tweaks={tweaks} setTweak={setTweak} onClose={() => setEditMode(false)} />
+      )}
+    </>
+  );
+}
+
+// ─── Tweaks panel ────────────────────────────────────────────
+function TweaksPanel({ tweaks, setTweak, onClose }) {
+  const swatch = (key, colors, label) => (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, letterSpacing: 1, color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>{label}</div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {colors.map((c, i) => (
+          <button key={i}
+            onClick={() => setTweak(key, c)}
+            style={{
+              width: 26, height: 26, borderRadius: 6, background: c,
+              border: tweaks[key] === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.2)',
+              cursor: 'pointer', padding: 0, outline: 'none',
+              boxShadow: tweaks[key] === c ? '0 0 0 2px rgba(255,255,255,0.3)' : 'none',
+            }} />
+        ))}
+      </div>
+    </div>
+  );
+
+  const opts = (key, options) => (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 10, letterSpacing: 1, color: 'rgba(255,255,255,0.55)', marginBottom: 6, textTransform: 'uppercase' }}>{key.replace(/([A-Z])/g, ' $1').trim()}</div>
+      <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: 3 }}>
+        {options.map((o, i) => (
+          <button key={i} onClick={() => setTweak(key, o)}
+            style={{
+              flex: 1, padding: '6px 10px', borderRadius: 6, border: 'none',
+              background: tweaks[key] === o ? 'rgba(255,255,255,0.15)' : 'transparent',
+              color: tweaks[key] === o ? '#fff' : 'rgba(255,255,255,0.55)',
+              fontSize: 11, fontFamily: 'DM Sans, system-ui', fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize',
+            }}>{o}</button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{
+      position: 'fixed', right: 20, bottom: 20, width: 260,
+      background: 'rgba(20,15,30,0.95)', backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255,255,255,0.15)', borderRadius: 14,
+      padding: 16, color: '#fff', fontFamily: 'DM Sans, system-ui',
+      boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)', zIndex: 1000,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.3 }}>Tweaks</div>
+        <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 16, padding: 0 }}>×</button>
+      </div>
+      {swatch('accentPulse', ['#FF3D7F','#FF8A3D','#00E0D1','#9D4DFF','#4D7CFF'], 'A · Pulse accent')}
+      {swatch('accentKanji', ['#E8482C','#F4B400','#2B7A3E','#3B5BDB','#C93FA9'], 'B · Kanji accent')}
+      {swatch('accentBlock', ['#00FF85','#FF3B00','#FFE600','#4F46FF','#FF4AC4'], 'C · Block accent')}
+      {opts('coverStyle', ['gradient','pattern','block'])}
+      {opts('density', ['sparse','comfy','dense'])}
+      <div style={{ fontFamily: 'JetBrains Mono', fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 10, lineHeight: 1.5 }}>
+        Accent swatches update on next edit · full interactive swap coming in v2
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

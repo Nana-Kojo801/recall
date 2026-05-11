@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">
+  <!-- Neo-brutalist offset shadow -->
+  <rect x="5" y="5" width="28" height="28" rx="8" fill="#1C1917"/>
+  <!-- Vermilion main box -->
+  <rect x="2" y="2" width="28" height="28" rx="8" fill="#E8482C" stroke="#1C1917" stroke-width="1.5"/>
+  <!-- White serif R -->
+  <text x="16" y="23.5" font-family="Georgia, 'Times New Roman', serif" font-size="19" font-weight="900" fill="#ffffff" text-anchor="middle">R</text>
+</svg>

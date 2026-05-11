@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\")",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(dir \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\\\\src\" /s /b)",
+      "Bash(dir \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\\\\convex\" /s /b)",
+      "Bash(pnpm add *)",
+      "Bash(pnpx convex *)",
+      "Bash(dir \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\\\\convex\\\\_generated\" /b)",
+      "Bash(pnpm build *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\\\\src\" -Recurse -File)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(pnpx tsc *)",
+      "Bash(pnpm exec *)",
+      "Bash(pnpm tsc *)",
+      "WebSearch",
+      "WebFetch(domain:clerk.com)",
+      "Bash(xargs grep '\"name\"')",
+      "Bash(dir node_modules\\\\.pnpm)",
+      "Bash(findstr clerk *)",
+      "Bash(pnpm list *)"
+    ]
+  }
+}
