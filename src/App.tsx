@@ -13,6 +13,8 @@ import { CalendarPage } from "./pages/calendar";
 import { SettingsPage } from "./pages/settings";
 import { CoursesPage } from "./pages/courses";
 import { StatsPage } from "./pages/stats";
+import { PrivacyPage } from "./pages/privacy";
+import { TermsPage } from "./pages/terms";
 
 // Module-level sets survive route changes (component remounts)
 const _notifiedDue = new Set<string>();
@@ -112,6 +114,8 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
         <Route path="/" element={<RequireAuth><HomePage /></RequireAuth>} />
         <Route path="/courses" element={<RequireAuth><CoursesPage /></RequireAuth>} />
         <Route path="/library" element={<RequireAuth><LibraryPage /></RequireAuth>} />

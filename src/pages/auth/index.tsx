@@ -1,7 +1,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth } from "convex/react";
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 
 const T = {
   bg: "#F5EFE2",
@@ -229,6 +229,11 @@ export function AuthPage() {
       <div style={{ marginTop: 14, fontFamily: T.fontMono, fontSize: 11, color: T.inkMute, letterSpacing: 1 }}>
         FREE · NO CARD · STUDENT VERIFIED
       </div>
+
+      <div style={{ marginTop: 20, display: "flex", gap: 16, fontFamily: T.fontMono, fontSize: 10, color: T.inkMute }}>
+        <Link to="/terms" style={{ color: T.inkMute, textDecoration: "none" }}>Terms of Service</Link>
+        <Link to="/privacy" style={{ color: T.inkMute, textDecoration: "none" }}>Privacy Policy</Link>
+      </div>
     </>
   );
 
@@ -272,7 +277,7 @@ export function AuthPage() {
             padding: "4px 10px", borderRadius: 4,
             fontFamily: T.fontMono, fontSize: 11, letterSpacing: 2, fontWeight: 700,
           }}>
-            RECALL
+            ENGRAM
           </div>
         </div>
 
