@@ -9,12 +9,13 @@
  */
 
 import type * as ai from "../ai.js";
-import type * as clerkWebhook from "../clerkWebhook.js";
+import type * as auth from "../auth.js";
 import type * as courses from "../courses.js";
 import type * as files from "../files.js";
 import type * as flashcards from "../flashcards.js";
 import type * as googleCalendar from "../googleCalendar.js";
 import type * as http from "../http.js";
+import type * as migrations from "../migrations.js";
 import type * as programSessions from "../programSessions.js";
 import type * as programs from "../programs.js";
 import type * as studySessions from "../studySessions.js";
@@ -29,12 +30,13 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
-  clerkWebhook: typeof clerkWebhook;
+  auth: typeof auth;
   courses: typeof courses;
   files: typeof files;
   flashcards: typeof flashcards;
   googleCalendar: typeof googleCalendar;
   http: typeof http;
+  migrations: typeof migrations;
   programSessions: typeof programSessions;
   programs: typeof programs;
   studySessions: typeof studySessions;

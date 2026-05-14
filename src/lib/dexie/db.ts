@@ -44,14 +44,14 @@ export interface SyncQueueItem {
   retries: number;
 }
 
-export class RecallDB extends Dexie {
+export class EngramDB extends Dexie {
   courses!: Table<LocalCourse>;
   topics!: Table<LocalTopic>;
   flashcards!: Table<LocalFlashcard>;
   syncQueue!: Table<SyncQueueItem>;
 
   constructor() {
-    super("recall-db");
+    super("engram-db");
     this.version(1).stores({
       courses: "id, userId",
       topics: "id, courseId, userId",
@@ -61,4 +61,4 @@ export class RecallDB extends Dexie {
   }
 }
 
-export const db = new RecallDB();
+export const db = new EngramDB();

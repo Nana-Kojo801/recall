@@ -91,23 +91,11 @@ function LoadingScreen() {
     >
       <style>{`@keyframes logoBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}`}</style>
       <div className="flex flex-col items-center gap-5">
-        <div
-          className="w-14 h-14 flex items-center justify-center"
-          style={{
-            background: "#E8482C",
-            border: "2.5px solid #1C1917",
-            boxShadow: "4px 4px 0 #1C1917",
-            borderRadius: 14,
-            animation: "logoBeat 1.1s ease-in-out infinite",
-          }}
-        >
-          <span
-            className="text-white text-2xl"
-            style={{ fontFamily: "var(--font-serif)", fontWeight: 900 }}
-          >
-            R
-          </span>
-        </div>
+        <img
+          src="/favicon.svg"
+          alt="Engram"
+          style={{ width: 56, height: 56, animation: "logoBeat 1.1s ease-in-out infinite" }}
+        />
       </div>
     </div>
   );

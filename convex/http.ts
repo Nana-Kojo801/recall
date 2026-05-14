@@ -1,12 +1,8 @@
 import { httpRouter } from "convex/server";
-import { handleWebhook } from "./clerkWebhook";
+import { auth } from "./auth";
 
 const http = httpRouter();
 
-http.route({
-  path: "/clerk-webhook",
-  method: "POST",
-  handler: handleWebhook,
-});
+auth.addHttpRoutes(http);
 
 export default http;

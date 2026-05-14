@@ -50,8 +50,8 @@ ${args.text.slice(0, 8000)}`;
       headers: {
         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": process.env.VITE_APP_URL ?? "https://recall.app",
-        "X-Title": "Recall - AI Flashcards",
+        "HTTP-Referer": process.env.VITE_APP_URL ?? "https://engram.app",
+        "X-Title": "Engram - AI Flashcards",
       },
       body: JSON.stringify({
         model: "openai/gpt-oss-120b:free",

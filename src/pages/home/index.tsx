@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { useUser } from "@clerk/react";
 import { useQuery } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
@@ -232,10 +231,10 @@ function DesktopCourseCard({
 
 export function HomePage() {
   const navigate = useNavigate();
-  const { user } = useUser();
-  const firstName = user?.firstName ?? "there";
-  const initials = user?.fullName
-    ? user.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+  const user = useQuery(api.users.getMe);
+  const firstName = user?.name?.split(" ")[0] ?? "there";
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : firstName[0]?.toUpperCase() ?? "?";
 
   const topics = useQuery(api.topics.listByUser);
@@ -349,7 +348,7 @@ export function HomePage() {
               {user?.imageUrl ? (
                 <img
                   src={user.imageUrl}
-                  alt={user.fullName ?? ""}
+                  alt={user.name ?? ""}
                   style={{ width: 46, height: 46, borderRadius: 14, border: "2.5px solid #1C1917", boxShadow: "3px 3px 0 #1C1917", objectFit: "cover" }}
                 />
               ) : (
