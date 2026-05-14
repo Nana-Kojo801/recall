@@ -1,10 +1,14 @@
-// Replicates favicon.svg geometry at every icon size using 4x supersampling.
-// favicon.svg design (36x36 viewBox):
-//   shadow : rect(5,5,28,28,rx=8)  fill=#1C1917
-//   box    : rect(2,2,28,28,rx=8)  fill=#0F1117  stroke=#F5A623 sw=1.5
-//   bar0   : rect(8,18,4,8,rx=1)   fill=#F5A623
-//   bar1   : rect(14,13,4,13,rx=1) fill=#F5A623
-//   bar2   : rect(20,8,4,18,rx=1)  fill=#F5A623
+// Renders Engraam neural engraam mark at all PWA icon sizes using 4x supersampling.
+// Design (36x36 SVG space):
+//   shadow : rect(5,5,28,28,rx=8)   fill=#1C1917
+//   box    : rect(2,2,28,28,rx=8)   fill=#0F1117  stroke=#F5A623 sw=1.5
+//   branch1: line(16,17 → 16,8.5)   stroke=#F5A623 sw=2.5 linecap=round
+//   branch2: line(16,17 → 8,24)     stroke=#F5A623 sw=2.5 linecap=round
+//   branch3: line(16,17 → 24,24)    stroke=#F5A623 sw=2.5 linecap=round
+//   node1  : circle(16,8.5,r=2.5)   fill=#F5A623
+//   node2  : circle(8,24,r=2)       fill=#F5A623
+//   node3  : circle(24,24,r=2)      fill=#F5A623
+//   center : circle(16,17,r=3.5)    fill=#F5A623
 // Run: node scripts/generate-icons.mjs
 
 import { deflateSync } from "node:zlib";
@@ -64,7 +68,7 @@ function encodePNG(pixels, size) {
   ]);
 }
 
-// ── Geometry ──────────────────────────────────────────────────────────────────
+// ── Geometry helpers ──────────────────────────────────────────────────────────
 
 function inRRect(px, py, x, y, w, h, rx) {
   if (px < x || px > x + w || py < y || py > y + h) return false;
@@ -88,40 +92,44 @@ function inRRect(px, py, x, y, w, h, rx) {
   return true;
 }
 
+function distToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+  return Math.hypot(px - x1 - t * dx, py - y1 - t * dy);
+}
+
 // ── Renderer ──────────────────────────────────────────────────────────────────
 
-const SS = 4; // supersampling factor
+const SS = 4;
 
 function renderIcon(size, maskable = false) {
   const ss = size * SS;
-
-  // Maskable: content at 70% scale, centered (30% total padding > 20% safe zone)
   const scale = maskable ? (0.70 * ss) / 36 : ss / 36;
   const ofs   = maskable ? ss * 0.15 : 0;
-  const s = (v) => v * scale + ofs;  // SVG coord → supersampled coord
-  const sc = (v) => v * scale;       // SVG dimension → supersampled dimension
+  const s  = (v) => v * scale + ofs;
+  const sc = (v) => v * scale;
 
-  const buf = new Uint8Array(ss * ss * 4); // RGBA, starts transparent
+  const buf = new Uint8Array(ss * ss * 4);
 
-  // Fill entire canvas dark for maskable
   if (maskable) {
     for (let i = 0; i < buf.length; i += 4) {
       buf[i] = 0x0f; buf[i + 1] = 0x11; buf[i + 2] = 0x17; buf[i + 3] = 255;
     }
   }
 
+  function paint(px, py, r, g, b) {
+    if (px < 0 || py < 0 || px >= ss || py >= ss) return;
+    const i = (py * ss + px) * 4;
+    buf[i] = r; buf[i + 1] = g; buf[i + 2] = b; buf[i + 3] = 255;
+  }
+
   function fillRRect(svgX, svgY, svgW, svgH, svgRx, r, g, b) {
     const x = s(svgX), y = s(svgY), w = sc(svgW), h = sc(svgH), rx = sc(svgRx);
-    const x0 = Math.floor(x), y0 = Math.floor(y);
-    const x1 = Math.ceil(x + w), y1 = Math.ceil(y + h);
-    for (let py = y0; py <= y1; py++) {
-      if (py < 0 || py >= ss) continue;
-      for (let px = x0; px <= x1; px++) {
-        if (px < 0 || px >= ss) continue;
-        if (inRRect(px + 0.5, py + 0.5, x, y, w, h, rx)) {
-          const i = (py * ss + px) * 4;
-          buf[i] = r; buf[i + 1] = g; buf[i + 2] = b; buf[i + 3] = 255;
-        }
+    for (let py = Math.floor(y); py <= Math.ceil(y + h); py++) {
+      for (let px = Math.floor(x); px <= Math.ceil(x + w); px++) {
+        if (inRRect(px + 0.5, py + 0.5, x, y, w, h, rx)) paint(px, py, r, g, b);
       }
     }
   }
@@ -131,30 +139,52 @@ function renderIcon(size, maskable = false) {
     const rx = sc(svgRx), sw = sc(svgSw) / 2;
     const ox = x - sw, oy = y - sw, ow = w + sw * 2, oh = h + sw * 2, orx = rx + sw;
     const ix = x + sw, iy = y + sw, iw = w - sw * 2, ih = h - sw * 2, irx = Math.max(0, rx - sw);
-    const x0 = Math.floor(ox), y0 = Math.floor(oy);
-    const x1 = Math.ceil(ox + ow), y1 = Math.ceil(oy + oh);
-    for (let py = y0; py <= y1; py++) {
-      if (py < 0 || py >= ss) continue;
-      for (let px = x0; px <= x1; px++) {
-        if (px < 0 || px >= ss) continue;
+    for (let py = Math.floor(oy); py <= Math.ceil(oy + oh); py++) {
+      for (let px = Math.floor(ox); px <= Math.ceil(ox + ow); px++) {
         const cx = px + 0.5, cy = py + 0.5;
-        if (inRRect(cx, cy, ox, oy, ow, oh, orx) && !inRRect(cx, cy, ix, iy, iw, ih, irx)) {
-          const i = (py * ss + px) * 4;
-          buf[i] = r; buf[i + 1] = g; buf[i + 2] = b; buf[i + 3] = 255;
-        }
+        if (inRRect(cx, cy, ox, oy, ow, oh, orx) && !inRRect(cx, cy, ix, iy, iw, ih, irx))
+          paint(px, py, r, g, b);
       }
     }
   }
 
-  // Draw in painter's order — matches SVG render order
-  fillRRect  (5, 5, 28, 28, 8,   0x1c, 0x19, 0x17); // shadow
-  fillRRect  (2, 2, 28, 28, 8,   0x0f, 0x11, 0x17); // box fill
-  strokeRRect(2, 2, 28, 28, 8, 1.5, 0xf5, 0xa6, 0x23); // box stroke
-  fillRRect  (8,  18, 4,  8, 1,  0xf5, 0xa6, 0x23); // bar 0
-  fillRRect  (14, 13, 4, 13, 1,  0xf5, 0xa6, 0x23); // bar 1
-  fillRRect  (20,  8, 4, 18, 1,  0xf5, 0xa6, 0x23); // bar 2
+  function strokeLine(svgX1, svgY1, svgX2, svgY2, svgSw, r, g, b) {
+    const x1 = s(svgX1), y1 = s(svgY1), x2 = s(svgX2), y2 = s(svgY2);
+    const sw = sc(svgSw) / 2;
+    const x0f = Math.floor(Math.min(x1, x2) - sw - 1);
+    const y0f = Math.floor(Math.min(y1, y2) - sw - 1);
+    const x1f = Math.ceil(Math.max(x1, x2) + sw + 1);
+    const y1f = Math.ceil(Math.max(y1, y2) + sw + 1);
+    for (let py = y0f; py <= y1f; py++) {
+      for (let px = x0f; px <= x1f; px++) {
+        if (distToSegment(px + 0.5, py + 0.5, x1, y1, x2, y2) <= sw) paint(px, py, r, g, b);
+      }
+    }
+  }
 
-  // Downsample (box average)
+  function fillCircle(svgCx, svgCy, svgR, r, g, b) {
+    const cx = s(svgCx), cy = s(svgCy), cr = sc(svgR);
+    for (let py = Math.floor(cy - cr); py <= Math.ceil(cy + cr); py++) {
+      for (let px = Math.floor(cx - cr); px <= Math.ceil(cx + cr); px++) {
+        const dx = px + 0.5 - cx, dy = py + 0.5 - cy;
+        if (dx * dx + dy * dy <= cr * cr) paint(px, py, r, g, b);
+      }
+    }
+  }
+
+  // Painter's order — matches SVG render order
+  fillRRect  (5, 5, 28, 28, 8,       0x1c, 0x19, 0x17); // shadow
+  fillRRect  (2, 2, 28, 28, 8,       0x0f, 0x11, 0x17); // box fill
+  strokeRRect(2, 2, 28, 28, 8, 1.5,  0xf5, 0xa6, 0x23); // box stroke
+  strokeLine (16, 17, 16,  8.5, 2.5, 0xf5, 0xa6, 0x23); // branch up
+  strokeLine (16, 17,  8, 24,   2.5, 0xf5, 0xa6, 0x23); // branch lower-left
+  strokeLine (16, 17, 24, 24,   2.5, 0xf5, 0xa6, 0x23); // branch lower-right
+  fillCircle (16,  8.5, 2.5,         0xf5, 0xa6, 0x23); // top node
+  fillCircle ( 8, 24,   2,           0xf5, 0xa6, 0x23); // bottom-left node
+  fillCircle (24, 24,   2,           0xf5, 0xa6, 0x23); // bottom-right node
+  fillCircle (16, 17,   3.5,         0xf5, 0xa6, 0x23); // central node
+
+  // Downsample
   const SS2 = SS * SS;
   const out = new Uint8Array(size * size * 4);
   for (let y = 0; y < size; y++) {
@@ -187,7 +217,7 @@ for (const s of [72, 96, 128, 144, 152, 192, 384, 512]) {
 writeFileSync(join(iconsDir, "icon-512x512-maskable.png"), encodePNG(renderIcon(512, true), 512));
 console.log("✓ icons/icon-512x512-maskable.png");
 
-writeFileSync(join(root, "public", "engram-icon-1024.png"), encodePNG(renderIcon(1024), 1024));
-console.log("✓ engram-icon-1024.png");
+writeFileSync(join(root, "public", "engraam-icon-1024.png"), encodePNG(renderIcon(1024), 1024));
+console.log("✓ engraam-icon-1024.png");
 
 console.log("\nDone!");

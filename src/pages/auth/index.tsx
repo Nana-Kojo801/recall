@@ -277,7 +277,7 @@ export function AuthPage() {
             padding: "4px 10px", borderRadius: 4,
             fontFamily: T.fontMono, fontSize: 11, letterSpacing: 2, fontWeight: 700,
           }}>
-            ENGRAM
+            ENGRAAM
           </div>
         </div>
 
@@ -318,9 +318,9 @@ export function AuthPage() {
 
           {/* logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-            <img src="/favicon.svg" alt="Engram" style={{ width: 36, height: 36 }} />
+            <img src="/favicon.svg" alt="Engraam" style={{ width: 36, height: 36 }} />
             <div style={{ fontFamily: T.fontSerif, fontSize: 24, fontWeight: 800, letterSpacing: -0.5 }}>
-              Engram
+              Engraam
             </div>
           </div>
 

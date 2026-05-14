@@ -133,7 +133,7 @@ function SettingsContent({
       ))}
 
       <p style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2, color: "#8A8278", marginTop: 8 }}>
-        ENGRAM · v1.0 · {new Date().getFullYear()}
+        ENGRAAM · v1.0 · {new Date().getFullYear()}
       </p>
       <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 10, fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278" }}>
         <a href="/terms" style={{ color: "#8A8278", textDecoration: "none" }}>Terms</a>

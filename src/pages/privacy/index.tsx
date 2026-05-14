@@ -64,8 +64,8 @@ export function PrivacyPage() {
         background: T.bgSoft,
       }}>
         <Link to="/auth" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: T.ink }}>
-          <img src="/favicon.svg" alt="Engram" style={{ width: 28, height: 28 }} />
-          <span style={{ fontFamily: T.fontSerif, fontWeight: 800, fontSize: 18, letterSpacing: -0.3 }}>Engram</span>
+          <img src="/favicon.svg" alt="Engraam" style={{ width: 28, height: 28 }} />
+          <span style={{ fontFamily: T.fontSerif, fontWeight: 800, fontSize: 18, letterSpacing: -0.3 }}>Engraam</span>
         </Link>
         <Link
           to="/auth"
@@ -114,12 +114,12 @@ export function PrivacyPage() {
 
         <Section title="Introduction">
           <P>
-            Engram ("we", "us", or "our") is an AI-powered study application designed for university students.
-            This Privacy Policy explains how we collect, use, and protect your information when you use Engram
-            ("the Service"). By using Engram, you agree to the practices described in this policy.
+            Engraam ("we", "us", or "our") is an AI-powered study application designed for university students.
+            This Privacy Policy explains how we collect, use, and protect your information when you use Engraam
+            ("the Service"). By using Engraam, you agree to the practices described in this policy.
           </P>
           <P>
-            Engram is currently in beta. We are committed to handling your data responsibly and transparently.
+            Engraam is currently in beta. We are committed to handling your data responsibly and transparently.
           </P>
         </Section>
 
@@ -127,7 +127,7 @@ export function PrivacyPage() {
           <P>We collect the following categories of information:</P>
           <Ul items={[
             "Account information from Google sign-in: your name, email address, and profile picture as provided by Google OAuth.",
-            "Google Calendar tokens: OAuth access and refresh tokens that allow Engram to create and manage calendar events on your behalf. These are stored securely and used only for the calendar integration described below.",
+            "Google Calendar tokens: OAuth access and refresh tokens that allow Engraam to create and manage calendar events on your behalf. These are stored securely and used only for the calendar integration described below.",
             "Uploaded document content: the text extracted from PDF, DOCX, or other files you upload to generate flashcards.",
             "Course and topic data: the names and structure of the courses and topics you create within the app.",
             "Flashcard data: AI-generated flashcards associated with your topics, including question and answer text and spaced repetition metadata (interval, ease factor, review history).",
@@ -151,30 +151,30 @@ export function PrivacyPage() {
           ]} />
           <P>
             We do not use your data for advertising, profiling, or any purpose unrelated to the core
-            functionality of Engram.
+            functionality of Engraam.
           </P>
         </Section>
 
         <Section title="Google OAuth and Calendar Access">
           <P>
-            Engram uses Google OAuth to authenticate users. When you sign in, Google provides us with your
+            Engraam uses Google OAuth to authenticate users. When you sign in, Google provides us with your
             basic profile information (name, email, profile picture) and, if you grant it, access to your
             Google Calendar.
           </P>
           <P>
-            <strong style={{ color: T.ink }}>Why we request Calendar access:</strong> Engram's core scheduling
+            <strong style={{ color: T.ink }}>Why we request Calendar access:</strong> Engraam's core scheduling
             feature creates study session events in your Google Calendar so that your spaced repetition reviews
             are automatically booked into your week. Without calendar access, this feature is unavailable, but
             the rest of the app remains fully functional.
           </P>
           <P>
             <strong style={{ color: T.ink }}>How Calendar access is used:</strong> We use your Google Calendar
-            access exclusively to create, update, and delete Engram study session events on your behalf. We do
+            access exclusively to create, update, and delete Engraam study session events on your behalf. We do
             not read your existing calendar events, access calendars other than the primary calendar, or use
             your calendar data for any other purpose.
           </P>
           <P>
-            You can revoke Engram's access to your Google Calendar at any time through your{" "}
+            You can revoke Engraam's access to your Google Calendar at any time through your{" "}
             <a
               href="https://myaccount.google.com/permissions"
               target="_blank"
@@ -187,7 +187,7 @@ export function PrivacyPage() {
             data or study history.
           </P>
           <P>
-            Engram's use and transfer of information received from Google APIs adheres to the{" "}
+            Engraam's use and transfer of information received from Google APIs adheres to the{" "}
             <a
               href="https://developers.google.com/terms/api-services-user-data-policy"
               target="_blank"
@@ -202,7 +202,7 @@ export function PrivacyPage() {
 
         <Section title="Uploaded Document Content">
           <P>
-            When you upload a document (such as a lecture PDF or DOCX file), Engram extracts the text content
+            When you upload a document (such as a lecture PDF or DOCX file), Engraam extracts the text content
             and sends it to our AI inference provider (OpenRouter) to generate flashcards. The extracted text
             content is stored in our database (Convex) associated with your account and topic.
           </P>
@@ -223,7 +223,7 @@ export function PrivacyPage() {
             data with advertisers, data brokers, or any third party for commercial purposes.
           </P>
           <P>
-            We share data only with the following third-party services that are necessary to operate Engram:
+            We share data only with the following third-party services that are necessary to operate Engraam:
           </P>
           <Ul items={[
             "Google (Google OAuth, Google Calendar API): for authentication and calendar integration. Subject to Google's Privacy Policy.",
@@ -244,9 +244,9 @@ export function PrivacyPage() {
             permanently deleted from our systems.
           </P>
           <P>
-            To request deletion of your data, use the "Delete account" option in the Engram Settings page,
+            To request deletion of your data, use the "Delete account" option in the Engraam Settings page,
             or contact us at{" "}
-            <a href="mailto:privacy@engram.app" style={{ color: T.accent }}>privacy@engram.app</a>.
+            <a href="mailto:privacy@engraam.app" style={{ color: T.accent }}>privacy@engraam.app</a>.
             We will process deletion requests within 30 days.
           </P>
         </Section>
@@ -261,16 +261,16 @@ export function PrivacyPage() {
           <P>
             No system can guarantee absolute security. If you believe your account has been compromised,
             please contact us immediately at{" "}
-            <a href="mailto:privacy@engram.app" style={{ color: T.accent }}>privacy@engram.app</a>.
+            <a href="mailto:privacy@engraam.app" style={{ color: T.accent }}>privacy@engraam.app</a>.
           </P>
         </Section>
 
         <Section title="Children's Privacy">
           <P>
-            Engram is intended for university students aged 18 and above. We do not knowingly collect
+            Engraam is intended for university students aged 18 and above. We do not knowingly collect
             personal information from anyone under the age of 18. If you believe a minor has created an
             account, please contact us at{" "}
-            <a href="mailto:privacy@engram.app" style={{ color: T.accent }}>privacy@engram.app</a>{" "}
+            <a href="mailto:privacy@engraam.app" style={{ color: T.accent }}>privacy@engraam.app</a>{" "}
             and we will promptly delete the account and associated data.
           </P>
         </Section>
@@ -279,7 +279,7 @@ export function PrivacyPage() {
           <P>
             We may update this Privacy Policy from time to time. When we make material changes, we will
             update the "Last updated" date at the top of this page and, where appropriate, notify you
-            within the app. Your continued use of Engram after changes are posted constitutes your acceptance
+            within the app. Your continued use of Engraam after changes are posted constitutes your acceptance
             of the revised policy.
           </P>
         </Section>
@@ -290,7 +290,7 @@ export function PrivacyPage() {
             your data, please contact us at:
           </P>
           <P>
-            <a href="mailto:privacy@engram.app" style={{ color: T.accent, fontWeight: 700 }}>privacy@engram.app</a>
+            <a href="mailto:privacy@engraam.app" style={{ color: T.accent, fontWeight: 700 }}>privacy@engraam.app</a>
           </P>
         </Section>
 
@@ -306,7 +306,7 @@ export function PrivacyPage() {
         }}>
           <Link to="/terms" style={{ color: T.inkMute, textDecoration: "none" }}>Terms of Service</Link>
           <Link to="/privacy" style={{ color: T.ink, textDecoration: "none", fontWeight: 700 }}>Privacy Policy</Link>
-          <Link to="/auth" style={{ color: T.inkMute, textDecoration: "none" }}>Back to Engram</Link>
+          <Link to="/auth" style={{ color: T.inkMute, textDecoration: "none" }}>Back to Engraam</Link>
         </div>
       </main>
     </div>

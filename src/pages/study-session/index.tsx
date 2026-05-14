@@ -179,7 +179,7 @@ export function StudySessionPage() {
                   eventId: nextSession.calendarEventId,
                   scheduledAt: adjustedAt,
                   durationMinutes: durationMin,
-                  title: `Engram: ${course.code} - ${topic.name}`,
+                  title: `Engraam: ${course.code} - ${topic.name}`,
                   description: `Spaced repetition session ${nextSession.sessionNumber} - ${nextSession.cardCount} cards to review`,
                 }).catch(() => {});
               }
