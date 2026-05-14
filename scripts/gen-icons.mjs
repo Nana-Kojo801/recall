@@ -10,16 +10,20 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 
-// Regenerate regular icons with transparent background
-const regularSvgRaw = readFileSync(path.join(root, "public/favicon.svg"), "utf8");
-// Strip the dark background rect so PNG icons are transparent
-const transparentSvg = Buffer.from(regularSvgRaw.replace(/<rect[^>]*fill="#0F1117"[^>]*\/>/, ""));
+// Regenerate regular icons composited over #0F1117 background
+const regularSvg = readFileSync(path.join(root, "public/favicon.svg"));
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
 
 for (const size of sizes) {
   const filename = `icon-${size}x${size}.png`;
-  await sharp(transparentSvg)
-    .resize(size, size)
+  const bg = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect width="${size}" height="${size}" fill="#0F1117"/></svg>`
+  );
+  await sharp(bg)
+    .composite([{
+      input: await sharp(regularSvg).resize(size, size).png().toBuffer(),
+      blend: "over",
+    }])
     .png()
     .toFile(path.join(root, "public/icons", filename));
   console.log(`Generated ${filename}`);
