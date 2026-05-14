@@ -1,6 +1,5 @@
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { useUser } from "@clerk/react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const NAV = [
@@ -15,7 +14,7 @@ const NAV = [
 export function Sidebar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { user } = useUser();
+  const user = useQuery(api.users.getMe);
   const courses = useQuery(api.courses.list);
   const topics = useQuery(api.topics.listByUser);
 
@@ -31,8 +30,8 @@ export function Sidebar() {
     : pathname.startsWith("/courses") ? "courses"
     : "today";
 
-  const initials = user?.fullName
-    ? user.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "?";
 
   return (
@@ -47,14 +46,9 @@ export function Sidebar() {
     }}>
       {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 6px 18px" }}>
-        <div style={{
-          width: 30, height: 30,
-          background: "#E8482C", border: "2px solid #1C1917",
-          display: "grid", placeItems: "center",
-          color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 900, fontSize: 14,
-        }}>R</div>
+        <img src="/favicon.svg" alt="Engram" style={{ width: 30, height: 30 }} />
         <div style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 800, letterSpacing: -0.4 }}>
-          Recall
+          Engram
         </div>
       </div>
 
@@ -185,9 +179,9 @@ export function Sidebar() {
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {user?.fullName ?? "You"}
+            {user?.name ?? "You"}
           </div>
-          <div style={{ fontSize: 10, color: "#8A8278", fontFamily: "var(--font-mono)" }}>Recall</div>
+          <div style={{ fontSize: 10, color: "#8A8278", fontFamily: "var(--font-mono)" }}>Engram</div>
         </div>
       </div>
     </div>

@@ -20,7 +20,15 @@
       "Bash(xargs grep '\"name\"')",
       "Bash(dir node_modules\\\\.pnpm)",
       "Bash(findstr clerk *)",
-      "Bash(pnpm list *)"
+      "Bash(pnpm list *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\" -Depth 0)",
+      "Bash(Select-Object FullName, Name)",
+      "Bash(Sort-Object Name)",
+      "Bash(pnpm remove *)",
+      "Bash(pnpm install *)",
+      "Bash(node -e ' *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\\\\public\" -File)",
+      "Bash(node scripts/generate-icons.mjs)"
     ]
   }
 }

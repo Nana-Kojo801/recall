@@ -1,5 +1,5 @@
-import { useClerk, useUser } from "@clerk/react";
-import { useMutation } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -8,21 +8,12 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 
-function ConnectGoogleCalendarButton() {
-  const { openUserProfile } = useClerk();
-  return (
-    <button
-      onClick={() => openUserProfile()}
-      style={{
-        padding: "4px 10px", background: "#3B5BDB", color: "#fff",
-        fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700,
-        borderRadius: 4, border: "1px solid #1C1917", cursor: "pointer",
-      }}
-    >
-      CONNECT
-    </button>
-  );
-}
+type ConvexUser = {
+  name?: string;
+  email?: string;
+  imageUrl?: string;
+  googleAccessToken?: string;
+} | null | undefined;
 
 function SettingsContent({
   signOut,
@@ -30,18 +21,15 @@ function SettingsContent({
   onDeleteAccount,
 }: {
   signOut: () => void;
-  user: ReturnType<typeof useUser>["user"];
+  user: ConvexUser;
   onDeleteAccount: () => void;
 }) {
-  const { openUserProfile } = useClerk();
-
-  const initials = user?.fullName
-    ? user.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "?";
 
-  const googleAccount = user?.externalAccounts?.find((a) => a.provider === "google");
-  const calendarConnected = !!googleAccount;
-  const googleEmail = googleAccount?.emailAddress;
+  const calendarConnected = !!(user?.googleAccessToken);
+  const googleEmail = user?.email;
 
   type Row =
     | { l: string; s?: string; chev: true; onPress?: () => void }
@@ -52,7 +40,7 @@ function SettingsContent({
     {
       h: "Calendar & sync",
       rows: [
-        { l: "Google Calendar", s: googleEmail ?? "Not connected", calendarRow: true },
+        { l: "Google Calendar", s: calendarConnected ? (googleEmail ?? "Connected") : "Not connected", calendarRow: true },
       ],
     },
     {
@@ -74,7 +62,7 @@ function SettingsContent({
         marginBottom: 24,
       }}>
         {user?.imageUrl ? (
-          <img src={user.imageUrl} alt={user.fullName ?? ""} style={{ width: 48, height: 48, borderRadius: 10, border: "2px solid #1C1917" }} />
+          <img src={user.imageUrl} alt={user.name ?? ""} style={{ width: 48, height: 48, borderRadius: 10, border: "2px solid #1C1917" }} />
         ) : (
           <div style={{
             width: 48, height: 48, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
@@ -86,10 +74,10 @@ function SettingsContent({
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontFamily: "var(--font-serif)", fontWeight: 900, fontSize: 18, color: "#fff", lineHeight: 1.1, margin: 0 }}>
-            {user?.fullName ?? "You"}
+            {user?.name ?? "You"}
           </p>
           <p style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.8)", marginTop: 2 }}>
-            {user?.primaryEmailAddress?.emailAddress}
+            {user?.email}
           </p>
         </div>
       </div>
@@ -128,20 +116,9 @@ function SettingsContent({
                     )}
                   </div>
                   {isCalendar && calendarConnected && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ padding: "2px 7px", background: "#2B7A3E", color: "#fff", fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, borderRadius: 4, border: "1px solid #1C1917" }}>
-                        CONNECTED
-                      </span>
-                      <button
-                        onClick={() => openUserProfile()}
-                        style={{ padding: "2px 8px", background: "#fff", color: "#1C1917", fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, borderRadius: 4, border: "1.5px solid #1C1917", cursor: "pointer" }}
-                      >
-                        MANAGE →
-                      </button>
-                    </div>
-                  )}
-                  {isCalendar && !calendarConnected && (
-                    <ConnectGoogleCalendarButton />
+                    <span style={{ padding: "2px 7px", background: "#2B7A3E", color: "#fff", fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, borderRadius: 4, border: "1px solid #1C1917" }}>
+                      CONNECTED
+                    </span>
                   )}
                   {hasChev && (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -163,8 +140,8 @@ function SettingsContent({
 }
 
 export function SettingsPage() {
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const user = useQuery(api.users.getMe);
+  const { signOut } = useAuthActions();
   const deleteAccountData = useMutation(api.users.deleteAccount);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -174,7 +151,7 @@ export function SettingsPage() {
     setDeleting(true);
     try {
       await deleteAccountData();
-      await user.delete();
+      await signOut();
     } catch {
       setDeleting(false);
     }
@@ -204,7 +181,7 @@ export function SettingsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
         >
-          <SettingsContent signOut={signOut} user={user} onDeleteAccount={() => setDeleteOpen(true)} />
+          <SettingsContent signOut={() => void signOut()} user={user} onDeleteAccount={() => setDeleteOpen(true)} />
         </motion.main>
         <BottomNav />
       </div>
@@ -227,7 +204,7 @@ export function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-            <SettingsContent signOut={signOut} user={user} onDeleteAccount={() => setDeleteOpen(true)} />
+            <SettingsContent signOut={() => void signOut()} user={user} onDeleteAccount={() => setDeleteOpen(true)} />
           </motion.div>
         </main>
       </div>

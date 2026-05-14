@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect, useRef, Fragment } from "react";
 import { useQuery, useAction } from "convex/react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "@clerk/react";
 import { api } from "@/../convex/_generated/api";
 import { motion } from "framer-motion";
 import { BottomNav } from "@/components/ui/bottom-nav";
@@ -828,8 +827,8 @@ function DesktopCalendar({ topics, calendarConnected, googleEvents, eventsLoadin
 export function CalendarPage() {
   const topics = useQuery(api.topics.listByUser);
   const allProgramSessions = useQuery(api.programSessions.getAllByUser);
-  const { user } = useUser();
-  const calendarConnected = !!(user?.externalAccounts?.find((a) => a.provider === "google"));
+  const user = useQuery(api.users.getMe);
+  const calendarConnected = !!(user?.googleAccessToken);
   const fetchEvents = useAction(api.googleCalendar.fetchUpcomingEvents);
   const [googleEvents, setGoogleEvents] = useState<GCalEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
