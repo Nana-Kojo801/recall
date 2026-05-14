@@ -36,7 +36,8 @@
       "PowerShell($content = Get-Content \"C:\\\\Users\\\\PC\\\\.claude\\\\projects\\\\c--Users-PC-Documents-Coding-Projects-recall\\\\728dd347-5a72-45e4-9bfe-7f761b6bf5c1.jsonl\"; $lastMsgs = $content | Select-Object -Last 30; foreach \\($l in $lastMsgs\\) { try { $obj = $l | ConvertFrom-Json; if \\($obj.message\\) { Write-Output \"ROLE: $\\($obj.message.role\\)\"; $obj.message.content | ForEach-Object { if \\($_.type -eq \"text\"\\) { Write-Output \"TEXT: $\\($_.text.Substring\\(0, [Math]::Min\\(300, $_.text.Length\\)\\)\\)\" } elseif \\($_.type -eq \"tool_use\"\\) { Write-Output \"TOOL: $\\($_.name\\) - $\\($_.input | ConvertTo-Json -Compress\\)\" } elseif \\($_.type -eq \"tool_result\"\\) { Write-Output \"RESULT: $\\($_.content | Select-Object -First 1 | ForEach-Object { $_.text.Substring\\(0, [Math]::Min\\(200, $_.text.Length\\)\\) }\\)\" } }; Write-Output \"---\" } } catch {} })",
       "PowerShell(git -C \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\" diff --cached convex/programSessions.ts)",
       "PowerShell(git -C \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\" diff HEAD convex/programSessions.ts)",
-      "PowerShell(git -C \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\" status --short)"
+      "PowerShell(git -C \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\" status --short)",
+      "Bash(node scripts/gen-icons.mjs)"
     ]
   }
 }

@@ -32,15 +32,8 @@ const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
 
 for (const size of sizes) {
   const filename = `icon-${size}x${size}.png`;
-  // Composite favicon SVG onto solid #0F1117 background
-  const bg = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect width="${size}" height="${size}" fill="#0F1117"/></svg>`
-  );
-  await sharp(bg)
-    .composite([{
-      input: await sharp(regularSvg).resize(size, size).png().toBuffer(),
-      blend: "over",
-    }])
+  await sharp(regularSvg)
+    .resize(size, size)
     .png()
     .toFile(path.join(root, "public/icons", filename));
   console.log(`Generated ${filename}`);
