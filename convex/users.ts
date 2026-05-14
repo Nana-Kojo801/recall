@@ -36,6 +36,19 @@ export const deleteAccount = mutation({
     if (!identity) throw new Error("Unauthenticated");
     const uid = identity.tokenIdentifier;
 
+    // Clean up auth tables so re-signup doesn't hit orphaned references
+    const authAccountEntries = await ctx.db
+      .query("authAccounts")
+      .withIndex("userIdAndProvider", (q) => q.eq("userId", userId))
+      .collect();
+    for (const entry of authAccountEntries) await ctx.db.delete(entry._id);
+
+    const authSessionEntries = await ctx.db
+      .query("authSessions")
+      .withIndex("userId", (q) => q.eq("userId", userId))
+      .collect();
+    for (const entry of authSessionEntries) await ctx.db.delete(entry._id);
+
     const uploads = await ctx.db
       .query("materialUploads")
       .withIndex("by_user", (q) => q.eq("userId", uid))
