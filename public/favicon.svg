@@ -4,6 +4,8 @@
       <rect x="1" y="1" width="34" height="34" rx="10"/>
     </clipPath>
   </defs>
+  <!-- dark background -->
+  <rect x="1" y="1" width="34" height="34" rx="10" fill="#0F1117"/>
   <!-- accent border -->
   <rect x="1" y="1" width="34" height="34" rx="10" fill="none" stroke="#F5A623" stroke-width="1.5"/>
   <!-- engram mark centered at 18,18 -->
