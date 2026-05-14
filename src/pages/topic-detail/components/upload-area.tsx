@@ -74,6 +74,12 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
       });
       setCardCount(fronts.length);
       setStatus("done");
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("Flashcards ready!", {
+          body: `${fronts.length} flashcards generated`,
+          icon: "/icons/icon-192x192.png",
+        });
+      }
     } catch (err) {
       setStatus("error");
       setErrorMsg(err instanceof Error ? err.message : "Generation failed");
@@ -219,7 +225,7 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
             disabled={!fileReady}
             onClick={handleGenerate}
           >
-            {fileReady ? "Generate Flashcards →" : "Upload file first"}
+            Generate
           </Button>
         </div>
       )}

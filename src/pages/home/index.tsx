@@ -283,6 +283,14 @@ export function HomePage() {
     })).filter(s => s.topic);
   }, [upcomingProgramSessions, topics]);
 
+  const upcomingReviews = useMemo(() => {
+    if (!topics) return [];
+    const n = Date.now();
+    return topics
+      .filter(t => t.nextReview && t.nextReview > n && t.nextReview <= n + 7 * 24 * 3600 * 1000)
+      .sort((a, b) => a.nextReview! - b.nextReview!);
+  }, [topics]);
+
   const hasInProgressSession = (() => {
     try {
       if (firstDuePS) {
@@ -453,6 +461,33 @@ export function HomePage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.topic?.name}</div>
                       <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", marginTop: 1 }}>{formatSessionTime(s.scheduledAt)}</div>
+                    </div>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming reviews */}
+          {upcomingReviews.length > 0 && (
+            <div style={{ padding: "16px 22px 0" }}>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5, color: "#8A8278", marginBottom: 8 }}>UPCOMING REVIEWS</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {upcomingReviews.slice(0, 5).map(t => (
+                  <div
+                    key={t._id}
+                    onClick={() => navigate(`/courses/${t.courseId}/topics/${t._id}`)}
+                    style={{ padding: "10px 14px", background: "#fff", border: "2px solid #1C1917", borderLeft: "4px solid #E8482C", borderRadius: 12, boxShadow: "2px 2px 0 #1C1917", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(232,72,44,0.1)", border: "1.5px solid #E8482C", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E8482C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#E8482C", marginTop: 1 }}>{formatSessionTime(t.nextReview!)}</div>
                     </div>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                   </div>
@@ -817,6 +852,32 @@ export function HomePage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.topic?.name}</div>
                       <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", marginTop: 2 }}>{formatSessionTime(s.scheduledAt)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming reviews */}
+          {upcomingReviews.length > 0 && (
+            <div style={{ padding: "0 28px 18px" }}>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 2, color: "#8A8278", fontWeight: 700, textTransform: "uppercase", marginBottom: 10 }}>Upcoming Reviews</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                {upcomingReviews.slice(0, 6).map(t => (
+                  <div
+                    key={t._id}
+                    onClick={() => navigate(`/courses/${t.courseId}/topics/${t._id}`)}
+                    style={{ padding: "12px 14px", background: "#fff", border: "2px solid #1C1917", borderLeft: "4px solid #E8482C", borderRadius: 12, boxShadow: "3px 3px 0 #1C1917", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(232,72,44,0.1)", border: "1.5px solid #E8482C", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8482C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#E8482C", marginTop: 2 }}>{formatSessionTime(t.nextReview!)}</div>
                     </div>
                   </div>
                 ))}

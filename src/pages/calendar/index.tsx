@@ -32,7 +32,7 @@ function DotBg() {
 
 const ACCENT_COLORS = ["#3B5BDB", "#E8482C", "#C93FA9", "#F4B400", "#2B7A3E"];
 const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const WEEK_HOURS = Array.from({ length: 23 }, (_, i) => i + 1);
+const WEEK_HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 function fmtHr(h: number, m = 0): string {
   const period = h < 12 ? "AM" : "PM";
@@ -133,7 +133,7 @@ function EventDetailContent({
     : undefined;
 
   const canStudy =
-    (event.type === "review" && event.courseId && event.topicId) ||
+    (event.type === "review" && event.courseId && event.topicId && event.startMs <= Date.now()) ||
     (event.type === "session" && !event.completed && event.topicId);
 
   const studyPath = (() => {
@@ -765,8 +765,7 @@ function DesktopCalendar({
         const d = new Date(ps.scheduledAt);
         const dayIndex = weekDays.findIndex(wd => wd.toDateString() === d.toDateString());
         const rawHr = d.getHours() + d.getMinutes() / 60;
-        const startHr = rawHr < 1 ? 9 : rawHr;
-        return { session: ps, dayIndex, startHr };
+        return { session: ps, dayIndex, startHr: rawHr };
       })
       .filter(e => e.dayIndex >= 0);
   }, [programSessions, monday, sunday, weekDays]);
@@ -780,7 +779,7 @@ function DesktopCalendar({
       const due = topics?.filter((t) => t.nextReview && t.nextReview >= s && t.nextReview < e) ?? [];
       if (due.length > 0) result.push({ date: d, topicList: due });
     }
-    return result.slice(0, 3);
+    return result;
   }, [topics, today]);
 
   const ROW_HEIGHT = 60;
@@ -841,50 +840,37 @@ function DesktopCalendar({
             <p style={{ fontFamily: "var(--font-accent)", fontSize: 20, color: "#2B7A3E" }}>All caught up! ✦</p>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-            {upcoming.map(({ date, topicList }, i) => {
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {upcoming.map(({ date, topicList }) => {
               const isToday = date.toDateString() === today.toDateString();
+              const isTomorrow = new Date(date.getTime() - 86400000).toDateString() === today.toDateString();
+              const dateLabel = isToday ? "TODAY" : isTomorrow ? "TOMORROW" : fmtMonthDay(date);
               return (
-                <div
-                  key={date.toISOString()}
-                  style={{ padding: 14, background: "#fff", border: "2px solid #1C1917", borderRadius: 12, boxShadow: "3px 3px 0 #1C1917", display: "flex", alignItems: "center", gap: 12 }}
-                >
-                  <div style={{ width: 54, height: 60, background: ACCENT_COLORS[i % ACCENT_COLORS.length], border: "1.5px solid #1C1917", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }}>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700 }}>{date.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}</div>
-                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 900, letterSpacing: -0.5, lineHeight: 1 }}>{date.getDate()}</div>
+                <Fragment key={date.toISOString()}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, color: isToday ? "#E8482C" : "#8A8278", letterSpacing: 1.5, padding: "6px 0 2px" }}>
+                    {dateLabel}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 14, fontWeight: 700, color: "#1C1917" }}>
-                      {topicList.length} {topicList.length === 1 ? "topic" : "topics"} · ~{Math.ceil(topicList.length * 2)} min
-                    </div>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: isToday ? "#E8482C" : "#8A8278", marginTop: 4, fontWeight: isToday ? 700 : 400 }}>
-                      {isToday ? "TODAY" : fmtMonthDay(date)}
-                    </div>
-                    {/* Topic chips */}
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
-                      {topicList.slice(0, 3).map(t => (
-                        <button
-                          key={t._id}
-                          onClick={() => openEvent({
-                            type: "review",
-                            label: t.name,
-                            startMs: t.nextReview!,
-                            endMs: t.nextReview! + 0.75 * 3600000,
-                            color: "#E8482C",
-                            topicId: t._id,
-                            courseId: t.courseId,
-                          })}
-                          style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(232,72,44,0.1)", color: "#E8482C", border: "1px solid rgba(232,72,44,0.3)", cursor: "pointer" }}
-                        >
-                          {t.name.length > 12 ? t.name.slice(0, 12) + "…" : t.name}
-                        </button>
-                      ))}
-                      {topicList.length > 3 && (
-                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 8, color: "#8A8278", alignSelf: "center" }}>+{topicList.length - 3}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  {topicList.map(t => (
+                    <button
+                      key={t._id}
+                      onClick={() => openEvent({
+                        type: "review",
+                        label: t.name,
+                        startMs: t.nextReview!,
+                        endMs: t.nextReview! + 0.75 * 3600000,
+                        color: "#E8482C",
+                        topicId: t._id,
+                        courseId: t.courseId,
+                      })}
+                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: "#fff", border: "2px solid #1C1917", borderLeft: "4px solid #E8482C", borderRadius: 10, boxShadow: "2px 2px 0 #1C1917", cursor: "pointer", textAlign: "left", width: "100%" }}
+                    >
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: "rgba(232,72,44,0.1)", color: "#E8482C", border: "1px solid rgba(232,72,44,0.3)", flexShrink: 0 }}>REVIEW</span>
+                      <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", flexShrink: 0 }}>{fmtHr(new Date(t.nextReview!).getHours(), new Date(t.nextReview!).getMinutes())}</div>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                    </button>
+                  ))}
+                </Fragment>
               );
             })}
           </div>
@@ -955,7 +941,7 @@ function DesktopCalendar({
                     {WEEK_HOURS.map((h, ri) => (
                       <Fragment key={h}>
                         <div style={{ paddingRight: 8, fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", textAlign: "right", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", transform: ri > 0 ? "translateY(-7px)" : "none", userSelect: "none" }}>
-                          {ri === 0 ? "" : fmtHr(h)}
+                          {fmtHr(h)}
                         </div>
                         {weekDays.map((_, di) => (
                           <div key={`c${h}${di}`} style={{ borderLeft: "1px solid rgba(28,25,23,0.08)", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", position: "relative" }}>
@@ -990,6 +976,7 @@ function DesktopCalendar({
                           })}
                           style={{ position: "absolute", top: topPx, height: heightPx, left: `calc(52px + ${e.dayIndex} * ((100% - 52px) / 7) + 3px)`, width: "calc((100% - 52px) / 7 - 6px)", background: "rgba(232,72,44,0.1)", color: "#E8482C", border: "1.5px solid #E8482C", borderLeft: "4px solid #E8482C", borderRadius: 4, padding: "3px 6px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", cursor: "pointer", zIndex: 5 }}
                         >
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, opacity: 0.75, marginBottom: 1 }}>REVIEW</div>
                           <div style={{ fontFamily: "var(--font-serif)", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.topic.name}</div>
                           <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(e.topic.nextReview!, e.topic.nextReview! + 0.75 * 3600000)}</div>
                         </div>
@@ -1020,6 +1007,7 @@ function DesktopCalendar({
                           })}
                           style={{ position: "absolute", top: topPx, height: heightPx, left: `calc(52px + ${e.dayIndex} * ((100% - 52px) / 7) + 3px)`, width: "calc((100% - 52px) / 7 - 6px)", background: isCompleted ? "rgba(28,25,23,0.05)" : "rgba(43,122,62,0.12)", color, border: `1.5px solid ${color}`, borderLeft: `4px solid ${color}`, borderRadius: 4, padding: "3px 6px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", zIndex: 5, opacity: isCompleted ? 0.75 : 1, cursor: "pointer" }}
                         >
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, opacity: 0.75, marginBottom: 1 }}>{isCompleted ? "DONE" : "SESSION"}</div>
                           <div style={{ fontFamily: "var(--font-serif)", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isCompleted ? "line-through" : "none" }}>{isCompleted ? "✓ " : ""}Session {e.session.sessionNumber}</div>
                           <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(e.session.scheduledAt, e.session.scheduledAt + e.session.cardCount * 60000)}</div>
                         </div>
@@ -1057,6 +1045,7 @@ function DesktopCalendar({
                           })}
                           style={{ position: "absolute", top: topPx + 1, height: heightPx, left: `calc(52px + ${dayIndex} * ((100% - 52px) / 7) + 3px)`, width: "calc((100% - 52px) / 7 - 6px)", background: "rgba(59,91,219,0.12)", color: "#3B5BDB", border: "1.5px solid #3B5BDB", borderLeft: "4px solid #3B5BDB", borderRadius: 4, padding: "3px 6px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", zIndex: 4, cursor: "pointer" }}
                         >
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, opacity: 0.75, marginBottom: 1 }}>CALENDAR</div>
                           <div style={{ fontFamily: "var(--font-serif)", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.summary ?? "Event"}</div>
                           <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(start.getTime(), end.getTime())}</div>
                         </div>
@@ -1099,7 +1088,7 @@ function DesktopCalendar({
                     {WEEK_HOURS.map((h, ri) => (
                       <Fragment key={h}>
                         <div style={{ paddingRight: 8, fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", textAlign: "right", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", transform: ri > 0 ? "translateY(-7px)" : "none", userSelect: "none" }}>
-                          {ri === 0 ? "" : fmtHr(h)}
+                          {fmtHr(h)}
                         </div>
                         <div style={{ borderLeft: "1px solid rgba(28,25,23,0.1)", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", position: "relative" }}>
                           <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: "rgba(28,25,23,0.04)" }} />
@@ -1130,6 +1119,7 @@ function DesktopCalendar({
                           })}
                           style={{ position: "absolute", top: topPx, height: Math.max(0.75 * ROW_HEIGHT - 2, 22), left: "calc(52px + 3px)", width: "calc(100% - 52px - 6px)", background: "rgba(232,72,44,0.1)", color: "#E8482C", border: "1.5px solid #E8482C", borderLeft: "4px solid #E8482C", borderRadius: 4, padding: "3px 8px", overflow: "hidden", zIndex: 5, cursor: "pointer" }}
                         >
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, opacity: 0.75, marginBottom: 1 }}>REVIEW</div>
                           <div style={{ fontFamily: "var(--font-serif)", fontSize: 12, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
                           <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(t.nextReview!, t.nextReview! + 0.75 * 3600000)}</div>
                         </div>
@@ -1139,7 +1129,7 @@ function DesktopCalendar({
                       const isCompleted = ps.status === "completed";
                       const d = new Date(ps.scheduledAt);
                       const rawHr = d.getHours() + d.getMinutes() / 60;
-                      const startHr = Math.max(WEEK_HOURS[0], rawHr < 1 ? 9 : rawHr);
+                      const startHr = Math.max(WEEK_HOURS[0], rawHr);
                       const topPx = (startHr - WEEK_HOURS[0]) * ROW_HEIGHT + 1;
                       const durHr = Math.max(ps.cardCount / 60, 0.25);
                       const color = isCompleted ? "rgba(28,25,23,0.35)" : "#2B7A3E";
@@ -1160,6 +1150,7 @@ function DesktopCalendar({
                           })}
                           style={{ position: "absolute", top: topPx, height: Math.max(durHr * ROW_HEIGHT - 2, 22), left: "calc(52px + 3px)", width: "calc(100% - 52px - 6px)", background: isCompleted ? "rgba(28,25,23,0.05)" : "rgba(43,122,62,0.12)", color, border: `1.5px solid ${color}`, borderLeft: `4px solid ${color}`, borderRadius: 4, padding: "3px 8px", overflow: "hidden", zIndex: 5, opacity: isCompleted ? 0.75 : 1, cursor: "pointer" }}
                         >
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, opacity: 0.75, marginBottom: 1 }}>{isCompleted ? "DONE" : "SESSION"}</div>
                           <div style={{ fontFamily: "var(--font-serif)", fontSize: 12, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isCompleted ? "line-through" : "none" }}>{isCompleted ? "✓ " : ""}Session {ps.sessionNumber}</div>
                           <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(ps.scheduledAt, ps.scheduledAt + ps.cardCount * 60000)}</div>
                         </div>
@@ -1190,6 +1181,7 @@ function DesktopCalendar({
                           })}
                           style={{ position: "absolute", top: topPx + 1, height: heightPx, left: "calc(52px + 3px)", width: "calc(100% - 52px - 6px)", background: "rgba(59,91,219,0.12)", color: "#3B5BDB", border: "1.5px solid #3B5BDB", borderLeft: "4px solid #3B5BDB", borderRadius: 4, padding: "3px 8px", overflow: "hidden", zIndex: 4, cursor: "pointer" }}
                         >
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, opacity: 0.75, marginBottom: 1 }}>CALENDAR</div>
                           <div style={{ fontFamily: "var(--font-serif)", fontSize: 12, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.summary ?? "Event"}</div>
                           <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(start.getTime(), end.getTime())}</div>
                         </div>
