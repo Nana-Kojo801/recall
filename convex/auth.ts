@@ -47,16 +47,19 @@ export const { auth, signIn, signOut, store } = convexAuth({
 
       if (existingUserId) {
         const existing = await ctx.db.get(existingUserId);
-        await ctx.db.patch(existingUserId, {
-          name: profile.name as string | undefined,
-          email,
-          imageUrl: profile.image as string | undefined,
-          googleAccessToken: tokenUpdates.googleAccessToken,
-          ...(googleRefreshToken
-            ? { googleRefreshToken }
-            : { googleRefreshToken: (existing as Record<string, unknown> | null)?.googleRefreshToken as string | undefined }),
-        });
-        return existingUserId;
+        if (existing) {
+          await ctx.db.patch(existingUserId, {
+            name: profile.name as string | undefined,
+            email,
+            imageUrl: profile.image as string | undefined,
+            googleAccessToken: tokenUpdates.googleAccessToken,
+            ...(googleRefreshToken
+              ? { googleRefreshToken }
+              : { googleRefreshToken: existing.googleRefreshToken }),
+          });
+          return existingUserId;
+        }
+        // User doc was deleted but authAccounts entry remains — fall through to recreate
       }
 
       // Migration path: find existing Clerk-era user by email
