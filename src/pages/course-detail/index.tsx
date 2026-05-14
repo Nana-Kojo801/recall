@@ -72,17 +72,6 @@ function DesktopTopicRow({ topic, courseColor, index }: { topic: { _id: Id<"topi
           </span>
         </div>
       </div>
-      <button
-        onClick={(e) => { e.stopPropagation(); navigate(`/courses/${courseId}/topics/${topic._id}/study`); }}
-        style={{
-          padding: "7px 12px", background: "#FBF6EA", color: "#1C1917",
-          border: "1.5px solid #1C1917", borderRadius: 8,
-          fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 700, cursor: "pointer",
-          flexShrink: 0,
-        }}
-      >
-        Study →
-      </button>
     </div>
   );
 }
@@ -288,7 +277,7 @@ export function CourseDetailPage() {
             </svg>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
               <button
-                onClick={() => navigate(-1)}
+                onClick={() => navigate("/courses")}
                 style={{
                   width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.25)",
                   border: "1.5px solid rgba(255,255,255,0.6)", display: "grid", placeItems: "center",

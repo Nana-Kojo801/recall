@@ -133,6 +133,33 @@ export const reschedule = mutation({
   },
 });
 
+export const getAllByUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    const upcoming = await ctx.db
+      .query("programSessions")
+      .withIndex("by_user_and_status", (q) =>
+        q.eq("userId", identity.tokenIdentifier).eq("status", "upcoming")
+      )
+      .collect();
+    const completed = await ctx.db
+      .query("programSessions")
+      .withIndex("by_user_and_status", (q) =>
+        q.eq("userId", identity.tokenIdentifier).eq("status", "completed")
+      )
+      .collect();
+    const missed = await ctx.db
+      .query("programSessions")
+      .withIndex("by_user_and_status", (q) =>
+        q.eq("userId", identity.tokenIdentifier).eq("status", "missed")
+      )
+      .collect();
+    return [...upcoming, ...completed, ...missed];
+  },
+});
+
 export const setCalendarEvent = mutation({
   args: {
     sessionId: v.id("programSessions"),

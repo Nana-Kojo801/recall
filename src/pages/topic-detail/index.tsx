@@ -43,12 +43,12 @@ function TopicPageSkeleton() {
       </div>
       <div className="hidden md:flex h-screen overflow-hidden">
         <Sidebar />
-        <main style={{ flex: 1, minWidth: 0, background: "#F5EFE2", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div className="animate-pulse" style={{ height: 200, background: "#D8CEBF", borderBottom: "2.5px solid rgba(28,25,23,0.12)", flexShrink: 0, padding: "28px 28px 24px" }}>
+        <main style={{ flex: 1, minWidth: 0, background: "#F5EFE2", overflowY: "auto" }}>
+          <div className="animate-pulse" style={{ height: 200, background: "#D8CEBF", borderBottom: "2.5px solid rgba(28,25,23,0.12)", padding: "28px 28px 24px" }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.3)", marginBottom: 20 }} />
             <div style={{ width: 280, height: 44, borderRadius: 6, background: "rgba(255,255,255,0.3)" }} />
           </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: 28, display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 24, alignContent: "start" }}>
+          <div style={{ padding: 28, display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 24, alignContent: "start" }}>
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse" style={{ height: 64, borderRadius: 12, background: "rgba(28,25,23,0.06)", border: "2px solid rgba(28,25,23,0.08)" }} />
             ))}
@@ -361,6 +361,8 @@ export function TopicDetailPage() {
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [deletingAllCards, setDeletingAllCards] = useState(false);
   const [deletingUploadId, setDeletingUploadId] = useState<string | null>(null);
+  const [freeStudyOpen, setFreeStudyOpen] = useState(false);
+  const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
 
   // Must be before any early return — Rules of Hooks
   const programSessions = useQuery(
@@ -450,7 +452,7 @@ export function TopicDetailPage() {
     if (activeProgram && dueSession) {
       navigate(`/courses/${courseId}/topics/${topicId}/study?programId=${activeProgram._id}&sessionId=${dueSession._id}`);
     } else {
-      navigate(`/courses/${courseId}/topics/${topicId}/study`);
+      setFreeStudyOpen(true);
     }
   }
 
@@ -527,7 +529,7 @@ export function TopicDetailPage() {
 
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(`/courses/${courseId}`)}
               className="w-9 h-9 rounded-lg flex items-center justify-center"
               style={{ background: "rgba(255,255,255,0.25)", border: "1.5px solid rgba(255,255,255,0.6)" }}
             >
@@ -613,17 +615,23 @@ export function TopicDetailPage() {
           )}
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-              <h2 className="text-[10px] font-bold tracking-[1.5px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "#8A8278" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <button
+                onClick={() => setUploadSheetOpen(true)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "#fff", color: "#1C1917", border: "2px solid #1C1917", borderRadius: 10, boxShadow: "2px 2px 0 #1C1917", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+                  <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+                </svg>
                 Upload Material
-              </h2>
+              </button>
               {uploads && uploads.length > 0 && (
                 <button onClick={() => setFilesOpen(true)} style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#3B5BDB", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                   {uploads.length} file{uploads.length !== 1 ? "s" : ""} ↗
                 </button>
               )}
             </div>
-            <UploadArea topicId={topicId as Id<"topics">} />
           </motion.div>
 
           {/* Active program session list */}
@@ -660,16 +668,16 @@ export function TopicDetailPage() {
       {/* ── Desktop ── */}
       <div className="hidden md:flex h-screen overflow-hidden">
         <Sidebar />
-        <main style={{ flex: 1, minWidth: 0, background: "#F5EFE2", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <main style={{ flex: 1, minWidth: 0, background: "#F5EFE2", overflowY: "auto" }}>
           {/* Hero */}
-          <div style={{ background: course.color, color: "#fff", padding: "28px 28px 24px", borderBottom: "2.5px solid #1C1917", position: "relative", overflow: "hidden", flexShrink: 0 }}>
+          <div style={{ background: course.color, color: "#fff", padding: "28px 28px 24px", borderBottom: "2.5px solid #1C1917", position: "relative", overflow: "hidden" }}>
             <svg style={{ position: "absolute", top: 28, right: 40, opacity: 0.3 }} width="28" height="28" viewBox="0 0 24 24" fill="#fff">
               <path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" />
             </svg>
 
             <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
               <button
-                onClick={() => navigate(-1)}
+                onClick={() => navigate(`/courses/${courseId}`)}
                 style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.25)", border: "1.5px solid rgba(255,255,255,0.6)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -730,7 +738,7 @@ export function TopicDetailPage() {
           </div>
 
           {/* Body */}
-          <div style={{ flex: 1, overflowY: "auto", padding: 28, display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 24, alignContent: "start" }}>
+          <div style={{ padding: 28, display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 24, alignContent: "start" }}>
             {/* Left: flashcards */}
             <div>
               {/* Due now banner */}
@@ -814,16 +822,22 @@ export function TopicDetailPage() {
 
             {/* Right: upload + program/stats */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ background: "#fff", border: "2px solid #1C1917", borderRadius: 14, boxShadow: "4px 4px 0 #1C1917", padding: 16 }}>
-                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
-                  <div style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 800, color: "#1C1917" }}>Upload Material</div>
-                  {uploads && uploads.length > 0 && (
-                    <button onClick={() => setFilesOpen(true)} style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#3B5BDB", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                      {uploads.length} file{uploads.length !== 1 ? "s" : ""} ↗
-                    </button>
-                  )}
-                </div>
-                <UploadArea topicId={topicId as Id<"topics">} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button
+                  onClick={() => setUploadSheetOpen(true)}
+                  style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", background: "#fff", color: "#1C1917", border: "2px solid #1C1917", borderRadius: 10, boxShadow: "2px 2px 0 #1C1917", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+                    <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+                  </svg>
+                  Upload Material
+                </button>
+                {uploads && uploads.length > 0 && (
+                  <button onClick={() => setFilesOpen(true)} style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#3B5BDB", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                    {uploads.length} file{uploads.length !== 1 ? "s" : ""} ↗
+                  </button>
+                )}
               </div>
 
               {/* Active program */}
@@ -906,6 +920,44 @@ export function TopicDetailPage() {
           </div>
         </div>
       </BottomSheet>
+
+      {/* Free study drawer */}
+      <BottomSheet open={freeStudyOpen} onOpenChange={setFreeStudyOpen} title="Study Now">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p style={{ fontSize: 14, color: "#4A4642", lineHeight: 1.6, margin: 0 }}>
+            {activeProgram
+              ? "No sessions are due right now. You can still review all your cards in a free study session."
+              : "You don't have a study program set up. Start a free session to review all cards now."}
+          </p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Button variant="secondary" className="flex-1" onClick={() => setFreeStudyOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" className="flex-1" onClick={() => {
+              setFreeStudyOpen(false);
+              navigate(`/courses/${courseId}/topics/${topicId}/study?all=1`);
+            }}>
+              Study Now →
+            </Button>
+          </div>
+          {!activeProgram && cardCount > 0 && (
+            <button
+              onClick={() => { setFreeStudyOpen(false); setProgramOpen(true); }}
+              style={{ padding: "10px", borderRadius: 10, background: "#3B5BDB", color: "#fff", border: "2px solid #1C1917", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Create Study Program Instead
+            </button>
+          )}
+        </div>
+      </BottomSheet>
+
+      {/* Upload material sheet */}
+      <RightSheet open={uploadSheetOpen} onOpenChange={setUploadSheetOpen} title="Upload Material">
+        <UploadArea topicId={topicId as Id<"topics">} onCancel={() => setUploadSheetOpen(false)} />
+      </RightSheet>
 
       {/* Uploaded files sheet */}
       <RightSheet open={filesOpen} onOpenChange={setFilesOpen} title="Uploaded Files">

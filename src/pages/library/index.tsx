@@ -109,6 +109,8 @@ function GroupSection({ group, index }: { group: Group; index: number }) {
 
 export function LibraryPage() {
   const [search, setSearch] = useState("");
+  const [filterCourse, setFilterCourse] = useState<string | null>(null);
+  const [filterRating, setFilterRating] = useState<"hard" | "okay" | "easy" | "unrated" | null>(null);
 
   const cards = useQuery(api.flashcards.listByUser);
   const topics = useQuery(api.topics.listByUser);
@@ -129,14 +131,23 @@ export function LibraryPage() {
   const grouped = useMemo<Group[]>(() => {
     if (!cards) return [];
     const q = search.toLowerCase();
-    const filtered = q
+    let filtered = q
       ? cards.filter(
           (c) =>
             c.front.toLowerCase().includes(q) ||
             c.back.toLowerCase().includes(q) ||
             (topicMap.get(c.topicId)?.name.toLowerCase().includes(q) ?? false)
         )
-      : cards;
+      : [...cards];
+
+    if (filterCourse) {
+      filtered = filtered.filter((c) => topicMap.get(c.topicId)?.courseId === filterCourse);
+    }
+    if (filterRating) {
+      filtered = filterRating === "unrated"
+        ? filtered.filter((c) => !c.lastRating)
+        : filtered.filter((c) => c.lastRating === filterRating);
+    }
 
     const map = new Map<string, Group>();
     filtered.forEach((card) => {
@@ -156,7 +167,7 @@ export function LibraryPage() {
       map.get(card.topicId)!.cards.push(card as Card);
     });
     return Array.from(map.values());
-  }, [cards, search, topicMap, courseMap]);
+  }, [cards, search, topicMap, courseMap, filterCourse, filterRating]);
 
   const isLoading = cards === undefined || topics === undefined || courses === undefined;
   const totalCards = cards?.length ?? 0;
@@ -183,9 +194,50 @@ export function LibraryPage() {
     </div>
   );
 
+  const RATING_COLORS: Record<string, string> = { hard: "#E8482C", okay: "#F4B400", easy: "#2B7A3E", unrated: "#8A8278" };
+  const RATING_LABELS: Record<string, string> = { hard: "Hard", okay: "Okay", easy: "Easy", unrated: "Unrated" };
+
+  const filterBar = !isLoading && (courses?.length ?? 0) > 0 && (
+    <div style={{ padding: "6px 20px 8px", borderBottom: "1px solid rgba(28,25,23,0.08)", display: "flex", flexDirection: "column", gap: 6 }}>
+      {/* Course chips */}
+      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
+        {[null, ...(courses ?? [])].map((c) => {
+          const active = filterCourse === (c ? c._id : null);
+          return (
+            <button
+              key={c?._id ?? "all-c"}
+              onClick={() => setFilterCourse(c ? c._id : null)}
+              style={{ padding: "4px 10px", borderRadius: 6, flexShrink: 0, border: "1.5px solid #1C1917", cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, background: active ? (c?.color ?? "#1C1917") : "#fff", color: active ? "#fff" : "#1C1917", transition: "all 0.1s" }}
+            >
+              {c ? c.name : "All courses"}
+            </button>
+          );
+        })}
+      </div>
+      {/* Rating chips */}
+      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
+        {([null, "hard", "okay", "easy", "unrated"] as const).map((r) => {
+          const active = filterRating === r;
+          const bg = active ? (r ? RATING_COLORS[r] : "#1C1917") : "#fff";
+          const fg = active ? (r === "okay" ? "#1C1917" : "#fff") : "#1C1917";
+          return (
+            <button
+              key={r ?? "all-r"}
+              onClick={() => setFilterRating(r)}
+              style={{ padding: "4px 10px", borderRadius: 6, flexShrink: 0, border: "1.5px solid #1C1917", cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, background: bg, color: fg, transition: "all 0.1s" }}
+            >
+              {r ? RATING_LABELS[r] : "All ratings"}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   const cardList = (
     <>
       {searchBar}
+      {filterBar}
       {isLoading ? (
         <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
           {[1, 2, 3].map((i) => (

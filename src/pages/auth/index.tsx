@@ -221,6 +221,7 @@ export function AuthPage() {
 
       {/* Clerk SignIn — Google button only, vermilion styled */}
       <div style={{ marginTop: 28, maxWidth: 400 }}>
+        <style>{`[class*="socialButtonsBlockButton"]:hover{background:#C93D22!important;opacity:1!important;box-shadow:2px 2px 0 #1C1917!important;}`}</style>
         <SignIn
           routing="hash"
           afterSignInUrl="/"

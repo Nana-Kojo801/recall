@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, Fragment } from "react";
+import { useMemo, useState, useEffect, useRef, Fragment } from "react";
 import { useQuery, useAction } from "convex/react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/react";
@@ -32,7 +32,7 @@ function DotBg() {
 
 const ACCENT_COLORS = ["#3B5BDB", "#E8482C", "#C93FA9", "#F4B400", "#2B7A3E"];
 const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const WEEK_HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+const WEEK_HOURS = Array.from({ length: 23 }, (_, i) => i + 1);
 
 function fmtHr(h: number, m = 0): string {
   const period = h < 12 ? "AM" : "PM";
@@ -96,6 +96,7 @@ function MobileCalendar({ topics, calendarConnected, googleEvents, eventsLoading
   const selectedDay = useMemo(() => {
     const d = new Date(today);
     d.setDate(d.getDate() + dayOffset);
+    d.setHours(0, 0, 0, 0);
     return d;
   }, [today, dayOffset]);
 
@@ -149,32 +150,6 @@ function MobileCalendar({ topics, calendarConnected, googleEvents, eventsLoading
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 2, background: "#1C1917", color: "#F5EFE2", padding: "4px 10px", borderRadius: 4 }}>
             CALENDAR
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {/* View toggle */}
-            <div style={{ display: "flex", background: "#fff", border: "2px solid #1C1917", borderRadius: 6, overflow: "hidden" }}>
-              {(["week", "day"] as const).map(m => (
-                <button key={m} onClick={() => setViewMode(m)} style={{ padding: "3px 8px", fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, cursor: "pointer", border: "none", background: viewMode === m ? "#1C1917" : "#fff", color: viewMode === m ? "#fff" : "#8A8278", letterSpacing: 0.5 }}>
-                  {m.toUpperCase()}
-                </button>
-              ))}
-            </div>
-            {/* Nav arrows */}
-            <button
-              onClick={() => viewMode === "week" ? setWeekOffset((o) => o - 1) : setDayOffset((o) => o - 1)}
-              style={{ width: 28, height: 28, borderRadius: 6, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-            </button>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", letterSpacing: 0.5, textAlign: "center", minWidth: viewMode === "week" ? 130 : 100 }}>
-              {viewMode === "week" ? weekLabel : dayLabel}
-            </div>
-            <button
-              onClick={() => viewMode === "week" ? setWeekOffset((o) => o + 1) : setDayOffset((o) => o + 1)}
-              style={{ width: 28, height: 28, borderRadius: 6, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-            </button>
           </div>
         </div>
 
@@ -259,6 +234,34 @@ function MobileCalendar({ topics, calendarConnected, googleEvents, eventsLoading
       </motion.div>
       )}
 
+      {/* Nav controls: toggle + arrows */}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 0" }}>
+        <div style={{ display: "flex", background: "#fff", border: "2px solid #1C1917", borderRadius: 6, overflow: "hidden" }}>
+          {(["week", "day"] as const).map(m => (
+            <button key={m} onClick={() => setViewMode(m)} style={{ padding: "4px 10px", fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, cursor: "pointer", border: "none", background: viewMode === m ? "#1C1917" : "#fff", color: viewMode === m ? "#fff" : "#8A8278", letterSpacing: 0.5 }}>
+              {m.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            onClick={() => viewMode === "week" ? setWeekOffset((o) => o - 1) : setDayOffset((o) => o - 1)}
+            style={{ width: 28, height: 28, borderRadius: 6, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", letterSpacing: 0.5, textAlign: "center", minWidth: viewMode === "week" ? 120 : 90 }}>
+            {viewMode === "week" ? weekLabel : dayLabel}
+          </div>
+          <button
+            onClick={() => viewMode === "week" ? setWeekOffset((o) => o + 1) : setDayOffset((o) => o + 1)}
+            style={{ width: 28, height: 28, borderRadius: 6, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+        </div>
+      </div>
+
       {viewMode === "week" ? (
       <motion.div
         key={`w${weekOffset}`}
@@ -303,10 +306,10 @@ function MobileCalendar({ topics, calendarConnected, googleEvents, eventsLoading
                     </div>
                   )}
                   {daySessions.map(ps => {
-                    const t = new Date(ps.scheduledAt);
+                    const isCompleted = ps.status === "completed";
                     return (
-                      <div key={ps._id} style={{ fontSize: 11, fontWeight: 600, color: "#2B7A3E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        Session {ps.sessionNumber} · {fmtPeriod(ps.scheduledAt, ps.scheduledAt + ps.cardCount * 60000)}
+                      <div key={ps._id} style={{ fontSize: 11, fontWeight: 600, color: isCompleted ? "#8A8278" : "#2B7A3E", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isCompleted ? "line-through" : "none", opacity: isCompleted ? 0.75 : 1 }}>
+                        {isCompleted ? "✓ " : ""}Session {ps.sessionNumber} · {fmtPeriod(ps.scheduledAt, ps.scheduledAt + ps.cardCount * 60000)}
                       </div>
                     );
                   })}
@@ -352,9 +355,9 @@ function MobileCalendar({ topics, calendarConnected, googleEvents, eventsLoading
             if (!str) return false;
             return new Date(str).toDateString() === selectedDay.toDateString();
           });
-          const events: { hour: number; minute: number; type: "review" | "session" | "gcal"; label: string; sublabel?: string; color: string; startMs: number; endMs: number }[] = [
+          const events: { hour: number; minute: number; type: "review" | "session" | "gcal"; label: string; sublabel?: string; color: string; startMs: number; endMs: number; completed?: boolean }[] = [
             ...dayTopics.map(t => ({ hour: new Date(t.nextReview!).getHours(), minute: new Date(t.nextReview!).getMinutes(), type: "review" as const, label: t.name, sublabel: "~2 min", color: "#E8482C", startMs: t.nextReview!, endMs: t.nextReview! + 0.75 * 3600000 })),
-            ...daySessions.map(ps => ({ hour: new Date(ps.scheduledAt).getHours(), minute: new Date(ps.scheduledAt).getMinutes(), type: "session" as const, label: `Session ${ps.sessionNumber}`, sublabel: `${ps.cardCount} cards`, color: "#2B7A3E", startMs: ps.scheduledAt, endMs: ps.scheduledAt + ps.cardCount * 60000 })),
+            ...daySessions.map(ps => ({ hour: new Date(ps.scheduledAt).getHours(), minute: new Date(ps.scheduledAt).getMinutes(), type: "session" as const, label: `Session ${ps.sessionNumber}`, sublabel: `${ps.cardCount} cards`, color: ps.status === "completed" ? "#8A8278" : "#2B7A3E", startMs: ps.scheduledAt, endMs: ps.scheduledAt + ps.cardCount * 60000, completed: ps.status === "completed" })),
             ...dayGEvents.map(ev => {
               const startStr = ev.start.dateTime ?? ev.start.date;
               const endStr = ev.end?.dateTime ?? ev.end?.date;
@@ -376,17 +379,17 @@ function MobileCalendar({ topics, calendarConnected, googleEvents, eventsLoading
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {events.map((ev, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#fff", border: "2px solid #1C1917", borderRadius: 10, boxShadow: "2px 2px 0 #1C1917" }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: ev.completed ? "rgba(28,25,23,0.04)" : "#fff", border: "2px solid #1C1917", borderRadius: 10, boxShadow: "2px 2px 0 #1C1917", opacity: ev.completed ? 0.7 : 1 }}>
                   <div style={{ width: 52, flexShrink: 0 }}>
                     <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, color: ev.color, letterSpacing: 0.5 }}>
-                      {ev.type === "review" ? "REVIEW" : ev.type === "session" ? "SESSION" : "CALENDAR"}
+                      {ev.completed ? "DONE" : ev.type === "review" ? "REVIEW" : ev.type === "session" ? "SESSION" : "CALENDAR"}
                     </div>
                     <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", marginTop: 1 }}>
                       {fmtHr(ev.hour, ev.minute)}
                     </div>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 13, fontWeight: 700, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.label}</div>
+                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 13, fontWeight: 700, color: ev.completed ? "#8A8278" : "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: ev.completed ? "line-through" : "none" }}>{ev.label}</div>
                     <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: ev.color, marginTop: 1 }}>{fmtPeriod(ev.startMs, ev.endMs)}</div>
                   </div>
                   <div style={{ width: 8, height: 8, background: ev.color, borderRadius: "50%", flexShrink: 0, border: "1.5px solid #1C1917" }} />
@@ -413,6 +416,7 @@ function DesktopCalendar({ topics, calendarConnected, googleEvents, eventsLoadin
   const selectedDay = useMemo(() => {
     const d = new Date(today);
     d.setDate(d.getDate() + dayOffset);
+    d.setHours(0, 0, 0, 0);
     return d;
   }, [today, dayOffset]);
 
@@ -446,7 +450,7 @@ function DesktopCalendar({ topics, calendarConnected, googleEvents, eventsLoadin
       .map((t) => {
         const d = new Date(t.nextReview!);
         const dayIndex = weekDays.findIndex((wd) => wd.toDateString() === d.toDateString());
-        const startHr = Math.max(7, Math.min(d.getHours(), 20));
+        const startHr = d.getHours() + d.getMinutes() / 60;
         return { topic: t, dayIndex, startHr, dur: 0.75 };
       })
       .filter((e) => e.dayIndex >= 0);
@@ -462,7 +466,8 @@ function DesktopCalendar({ topics, calendarConnected, googleEvents, eventsLoadin
       .map(ps => {
         const d = new Date(ps.scheduledAt);
         const dayIndex = weekDays.findIndex(wd => wd.toDateString() === d.toDateString());
-        const startHr = Math.max(7, Math.min(d.getHours() || 9, 20));
+        const rawHr = d.getHours() + d.getMinutes() / 60;
+        const startHr = rawHr < 1 ? 9 : rawHr;
         return { session: ps, dayIndex, startHr };
       })
       .filter(e => e.dayIndex >= 0);
@@ -481,7 +486,14 @@ function DesktopCalendar({ topics, calendarConnected, googleEvents, eventsLoadin
     return result.slice(0, 3);
   }, [topics, today]);
 
-  const ROW_HEIGHT = 54;
+  const ROW_HEIGHT = 60;
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!gridScrollRef.current) return;
+    const target = Math.max(0, today.getHours() - 1);
+    gridScrollRef.current.scrollTop = Math.max(0, target - WEEK_HOURS[0]) * ROW_HEIGHT;
+  }, []);
 
   return (
     <div>
@@ -588,7 +600,7 @@ function DesktopCalendar({ topics, calendarConnected, googleEvents, eventsLoadin
         {viewMode === "week" ? (
         <div style={{ background: "#fff", border: "2.5px solid #1C1917", borderRadius: 14, boxShadow: "5px 5px 0 #1C1917", overflow: "hidden" }}>
           {/* Day headers */}
-          <div style={{ display: "grid", gridTemplateColumns: "60px repeat(7, 1fr)", borderBottom: "2px solid #1C1917", background: "#FBF6EA" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "52px repeat(7, 1fr)", borderBottom: "2px solid #1C1917", background: "#FBF6EA" }}>
             <div />
             {weekDays.map((d, i) => {
               const isToday = d.toDateString() === today.toDateString();
@@ -605,98 +617,103 @@ function DesktopCalendar({ topics, calendarConnected, googleEvents, eventsLoadin
             })}
           </div>
 
-          {/* Grid body with events */}
-          <div style={{ position: "relative", display: "grid", gridTemplateColumns: "60px repeat(7, 1fr)", gridAutoRows: ROW_HEIGHT }}>
-            {WEEK_HOURS.map((h, ri) => (
-              <Fragment key={h}>
-                <div style={{ padding: "4px 8px", fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", textAlign: "right", display: "flex", alignItems: "flex-start", justifyContent: "flex-end" }}>
-                  {h}:00
-                </div>
-                {weekDays.map((_, di) => (
-                  <div key={`c${h}${di}`} style={{ borderLeft: "1.5px solid rgba(28,25,23,0.1)", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.08)", position: "relative" }} />
-                ))}
-              </Fragment>
-            ))}
+          {/* Grid body with events — scrollable */}
+          <div ref={gridScrollRef} style={{ maxHeight: "600px", overflowY: "auto" }}>
+          {(() => {
+            const nowHr = today.getHours() + today.getMinutes() / 60;
+            const currentTimePx = (nowHr - WEEK_HOURS[0]) * ROW_HEIGHT;
+            const showCurrentTime = nowHr >= WEEK_HOURS[0] && nowHr < WEEK_HOURS[WEEK_HOURS.length - 1] + 1;
+            const todayColIndex = weekDays.findIndex(d => d.toDateString() === today.toDateString());
+            return (
+            <div style={{ position: "relative", display: "grid", gridTemplateColumns: "52px repeat(7, 1fr)", gridAutoRows: ROW_HEIGHT }}>
+              {WEEK_HOURS.map((h, ri) => (
+                <Fragment key={h}>
+                  <div style={{ paddingRight: 8, fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", textAlign: "right", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", transform: ri > 0 ? "translateY(-7px)" : "none", userSelect: "none" }}>
+                    {ri === 0 ? "" : fmtHr(h)}
+                  </div>
+                  {weekDays.map((_, di) => (
+                    <div key={`c${h}${di}`} style={{ borderLeft: "1px solid rgba(28,25,23,0.08)", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", position: "relative" }}>
+                      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: "rgba(28,25,23,0.04)" }} />
+                    </div>
+                  ))}
+                </Fragment>
+              ))}
 
-            {/* Review event overlays */}
-            {reviewEvents.map((e, i) => {
-              const topPx = (e.startHr - WEEK_HOURS[0]) * ROW_HEIGHT + 2;
-              const heightPx = e.dur * ROW_HEIGHT - 4;
-              return (
-                <div
-                  key={`r${i}`}
-                  onClick={() => navigate(`/courses/${e.topic.courseId}/topics/${e.topic._id}/study`)}
-                  style={{ position: "absolute", top: topPx, height: heightPx, left: `calc(60px + ${e.dayIndex} * ((100% - 60px) / 7) + 3px)`, width: "calc((100% - 60px) / 7 - 6px)", background: "#fff", color: "#1C1917", border: "2px dashed #1C1917", borderRadius: 8, padding: "4px 8px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", cursor: "pointer", zIndex: 5 }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: "var(--font-mono)", fontSize: 9, color: "#E8482C", letterSpacing: 1, marginBottom: 1 }}>
-                    <div style={{ width: 7, height: 7, background: "#E8482C", borderRadius: 2, border: "1px solid #1C1917" }} />
-                    REVIEW · {fmtPeriod(e.topic.nextReview!, e.topic.nextReview! + 0.75 * 3600000)}
-                  </div>
-                  <div style={{ fontFamily: "var(--font-serif)", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {e.topic.name}
-                  </div>
-                </div>
-              );
-            })}
+              {/* Current time indicator */}
+              {showCurrentTime && todayColIndex >= 0 && (
+                <>
+                  <div style={{ position: "absolute", top: currentTimePx, left: 0, right: 0, height: 2, background: "#E8482C", zIndex: 10, pointerEvents: "none" }} />
+                  <div style={{ position: "absolute", top: currentTimePx - 5, left: `calc(52px + ${todayColIndex} * ((100% - 52px) / 7) - 1px)`, width: 12, height: 12, background: "#E8482C", borderRadius: "50%", zIndex: 10, pointerEvents: "none" }} />
+                </>
+              )}
 
-            {/* Program session overlays */}
-            {programSessionEvents.map((e, i) => {
-              const topPx = (e.startHr - WEEK_HOURS[0]) * ROW_HEIGHT + 2;
-              const heightPx = ROW_HEIGHT * 0.75 - 4;
-              return (
-                <div
-                  key={`ps${i}`}
-                  style={{ position: "absolute", top: topPx, height: heightPx, left: `calc(60px + ${e.dayIndex} * ((100% - 60px) / 7) + 3px)`, width: "calc((100% - 60px) / 7 - 6px)", background: "#2B7A3E", color: "#fff", border: "2px solid #1C1917", borderRadius: 8, padding: "4px 8px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", zIndex: 5 }}
-                >
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.85, letterSpacing: 1, marginBottom: 1 }}>
-                    SESSION {e.session.sessionNumber} · {fmtPeriod(e.session.scheduledAt, e.session.scheduledAt + e.session.cardCount * 60000)}
+              {/* Review event overlays */}
+              {reviewEvents.map((e, i) => {
+                const clampedStart = Math.max(e.startHr, WEEK_HOURS[0]);
+                const topPx = (clampedStart - WEEK_HOURS[0]) * ROW_HEIGHT + 1;
+                const heightPx = Math.max(e.dur * ROW_HEIGHT - 2, 22);
+                return (
+                  <div
+                    key={`r${i}`}
+                    onClick={() => navigate(`/courses/${e.topic.courseId}/topics/${e.topic._id}/study`)}
+                    style={{ position: "absolute", top: topPx, height: heightPx, left: `calc(52px + ${e.dayIndex} * ((100% - 52px) / 7) + 3px)`, width: "calc((100% - 52px) / 7 - 6px)", background: "rgba(232,72,44,0.1)", color: "#E8482C", border: "1.5px solid #E8482C", borderLeft: "4px solid #E8482C", borderRadius: 4, padding: "3px 6px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", cursor: "pointer", zIndex: 5 }}
+                  >
+                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.topic.name}</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(e.topic.nextReview!, e.topic.nextReview! + 0.75 * 3600000)}</div>
                   </div>
-                  <div style={{ fontFamily: "var(--font-serif)", fontSize: 10, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {e.session.cardCount} cards
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
 
-            {/* Google Calendar loading skeleton */}
-            {eventsLoading && [0, 1, 2].map((i) => (
-              <div
-                key={`skel${i}`}
-                className="animate-pulse"
-                style={{ position: "absolute", top: (i * 2 + 1) * ROW_HEIGHT + 4, height: ROW_HEIGHT - 8, left: `calc(60px + ${(i + 1) % 7} * ((100% - 60px) / 7) + 3px)`, width: "calc((100% - 60px) / 7 - 6px)", background: "rgba(59,91,219,0.15)", border: "2px solid rgba(59,91,219,0.2)", borderRadius: 8, zIndex: 3 }}
-              />
-            ))}
+              {/* Program session overlays */}
+              {programSessionEvents.map((e, i) => {
+                const isCompleted = e.session.status === "completed";
+                const clampedStart = Math.max(e.startHr, WEEK_HOURS[0]);
+                const topPx = (clampedStart - WEEK_HOURS[0]) * ROW_HEIGHT + 1;
+                const durHr = Math.max(e.session.cardCount / 60, 0.25);
+                const heightPx = Math.max(durHr * ROW_HEIGHT - 2, 22);
+                const color = isCompleted ? "rgba(28,25,23,0.35)" : "#2B7A3E";
+                return (
+                  <div
+                    key={`ps${i}`}
+                    style={{ position: "absolute", top: topPx, height: heightPx, left: `calc(52px + ${e.dayIndex} * ((100% - 52px) / 7) + 3px)`, width: "calc((100% - 52px) / 7 - 6px)", background: isCompleted ? "rgba(28,25,23,0.05)" : "rgba(43,122,62,0.12)", color, border: `1.5px solid ${color}`, borderLeft: `4px solid ${color}`, borderRadius: 4, padding: "3px 6px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", zIndex: 5, opacity: isCompleted ? 0.75 : 1 }}
+                  >
+                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isCompleted ? "line-through" : "none" }}>{isCompleted ? "✓ " : ""}Session {e.session.sessionNumber}</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(e.session.scheduledAt, e.session.scheduledAt + e.session.cardCount * 60000)}</div>
+                  </div>
+                );
+              })}
 
-            {/* Google Calendar event overlays */}
-            {!eventsLoading && googleEvents.map((ev) => {
-              const startStr = ev.start.dateTime ?? ev.start.date;
-              const endStr = ev.end.dateTime ?? ev.end.date;
-              if (!startStr) return null;
-              const start = new Date(startStr);
-              const end = endStr ? new Date(endStr) : new Date(start.getTime() + 60 * 60 * 1000);
-              const dayIndex = weekDays.findIndex((wd) => wd.toDateString() === start.toDateString());
-              if (dayIndex < 0) return null;
-              const startHr = start.getHours() + start.getMinutes() / 60;
-              const endHr = end.getHours() + end.getMinutes() / 60;
-              if (startHr >= WEEK_HOURS[WEEK_HOURS.length - 1] + 1 || endHr <= WEEK_HOURS[0]) return null;
-              const clampedStart = Math.max(startHr, WEEK_HOURS[0]);
-              const clampedEnd = Math.min(endHr, WEEK_HOURS[WEEK_HOURS.length - 1] + 1);
-              const topPx = (clampedStart - WEEK_HOURS[0]) * ROW_HEIGHT;
-              const heightPx = Math.max((clampedEnd - clampedStart) * ROW_HEIGHT - 4, 20);
-              return (
-                <div
-                  key={ev.id}
-                  style={{ position: "absolute", top: topPx + 2, height: heightPx, left: `calc(60px + ${dayIndex} * ((100% - 60px) / 7) + 3px)`, width: "calc((100% - 60px) / 7 - 6px)", background: "#3B5BDB", color: "#fff", border: "2px solid #1C1917", borderRadius: 8, padding: "4px 8px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", zIndex: 4 }}
-                >
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.85, letterSpacing: 1, marginBottom: 1 }}>
-                    {fmtPeriod(start.getTime(), end.getTime())}
+              {/* Google Calendar loading skeleton */}
+              {eventsLoading && [0, 1, 2].map((i) => (
+                <div key={`skel${i}`} className="animate-pulse" style={{ position: "absolute", top: (i * 2 + 1) * ROW_HEIGHT + 4, height: ROW_HEIGHT - 8, left: `calc(52px + ${(i + 1) % 7} * ((100% - 52px) / 7) + 3px)`, width: "calc((100% - 52px) / 7 - 6px)", background: "rgba(59,91,219,0.12)", border: "1.5px solid rgba(59,91,219,0.2)", borderRadius: 4, zIndex: 3 }} />
+              ))}
+
+              {/* Google Calendar event overlays */}
+              {!eventsLoading && googleEvents.map((ev) => {
+                const startStr = ev.start.dateTime ?? ev.start.date;
+                const endStr = ev.end.dateTime ?? ev.end.date;
+                if (!startStr) return null;
+                const start = new Date(startStr);
+                const end = endStr ? new Date(endStr) : new Date(start.getTime() + 60 * 60 * 1000);
+                const dayIndex = weekDays.findIndex((wd) => wd.toDateString() === start.toDateString());
+                if (dayIndex < 0) return null;
+                const startHr = start.getHours() + start.getMinutes() / 60;
+                const endHr = end.getHours() + end.getMinutes() / 60;
+                if (startHr >= WEEK_HOURS[WEEK_HOURS.length - 1] + 1 || endHr <= WEEK_HOURS[0]) return null;
+                const clampedStart = Math.max(startHr, WEEK_HOURS[0]);
+                const clampedEnd = Math.min(endHr, WEEK_HOURS[WEEK_HOURS.length - 1] + 1);
+                const topPx = (clampedStart - WEEK_HOURS[0]) * ROW_HEIGHT;
+                const heightPx = Math.max((clampedEnd - clampedStart) * ROW_HEIGHT - 2, 22);
+                return (
+                  <div key={ev.id} style={{ position: "absolute", top: topPx + 1, height: heightPx, left: `calc(52px + ${dayIndex} * ((100% - 52px) / 7) + 3px)`, width: "calc((100% - 52px) / 7 - 6px)", background: "rgba(59,91,219,0.12)", color: "#3B5BDB", border: "1.5px solid #3B5BDB", borderLeft: "4px solid #3B5BDB", borderRadius: 4, padding: "3px 6px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", zIndex: 4 }}>
+                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.summary ?? "Event"}</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(start.getTime(), end.getTime())}</div>
                   </div>
-                  <div style={{ fontFamily: "var(--font-serif)", fontSize: 10, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {ev.summary ?? "Event"}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+            );
+          })()}
           </div>
         </div>
         ) : (
@@ -713,74 +730,91 @@ function DesktopCalendar({ topics, calendarConnected, googleEvents, eventsLoadin
               {selectedDay.toDateString() === today.toDateString() && <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#E8482C", fontWeight: 700, marginTop: 2 }}>TODAY</div>}
             </div>
           </div>
-          {/* Hourly grid */}
-          <div style={{ position: "relative", display: "grid", gridTemplateColumns: "60px 1fr", gridAutoRows: ROW_HEIGHT }}>
-            {WEEK_HOURS.map((h, ri) => (
-              <Fragment key={h}>
-                <div style={{ padding: "4px 8px", fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", textAlign: "right", display: "flex", alignItems: "flex-start", justifyContent: "flex-end" }}>
-                  {h}:00
-                </div>
-                <div style={{ borderLeft: "1.5px solid rgba(28,25,23,0.1)", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.08)", position: "relative" }} />
-              </Fragment>
-            ))}
-            {/* Day events */}
-            {(() => {
-              const s = selectedDay.getTime();
-              const e = s + 24 * 60 * 60 * 1000;
-              const dayTopics = topics?.filter(t => t.nextReview && t.nextReview >= s && t.nextReview < e) ?? [];
-              const daySessions = programSessions?.filter(ps => ps.scheduledAt >= s && ps.scheduledAt < e) ?? [];
-              const dayGEvents = googleEvents.filter(ev => {
-                const str = ev.start.dateTime ?? ev.start.date;
-                if (!str) return false;
-                return new Date(str).toDateString() === selectedDay.toDateString();
-              });
-              return <>
-                {dayTopics.map((t, i) => {
-                  const d = new Date(t.nextReview!);
-                  const startHr = Math.max(WEEK_HOURS[0], Math.min(d.getHours(), WEEK_HOURS[WEEK_HOURS.length - 1]));
-                  const topPx = (startHr - WEEK_HOURS[0]) * ROW_HEIGHT + 2;
-                  return (
-                    <div key={`r${i}`} onClick={() => navigate(`/courses/${t.courseId}/topics/${t._id}/study`)}
-                      style={{ position: "absolute", top: topPx, height: ROW_HEIGHT * 0.75 - 4, left: "calc(60px + 3px)", width: "calc(100% - 60px - 6px)", background: "#fff", border: "2px dashed #1C1917", borderRadius: 8, padding: "4px 10px", overflow: "hidden", zIndex: 5, cursor: "pointer" }}
-                    >
-                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#E8482C", letterSpacing: 1, marginBottom: 1 }}>REVIEW · {fmtPeriod(t.nextReview!, t.nextReview! + 0.75 * 3600000)}</div>
-                      <div style={{ fontFamily: "var(--font-serif)", fontSize: 12, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
-                    </div>
-                  );
-                })}
-                {daySessions.map((ps, i) => {
-                  const d = new Date(ps.scheduledAt);
-                  const startHr = Math.max(WEEK_HOURS[0], Math.min(d.getHours() || 9, WEEK_HOURS[WEEK_HOURS.length - 1]));
-                  const topPx = (startHr - WEEK_HOURS[0]) * ROW_HEIGHT + 2;
-                  return (
-                    <div key={`ps${i}`} style={{ position: "absolute", top: topPx, height: ROW_HEIGHT * 0.75 - 4, left: "calc(60px + 3px)", width: "calc(100% - 60px - 6px)", background: "#2B7A3E", color: "#fff", border: "2px solid #1C1917", borderRadius: 8, padding: "4px 10px", overflow: "hidden", zIndex: 5 }}>
-                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.85, letterSpacing: 1, marginBottom: 1 }}>SESSION {ps.sessionNumber} · {fmtPeriod(ps.scheduledAt, ps.scheduledAt + ps.cardCount * 60000)}</div>
-                      <div style={{ fontFamily: "var(--font-serif)", fontSize: 12, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ps.cardCount} cards</div>
-                    </div>
-                  );
-                })}
-                {dayGEvents.map(ev => {
-                  const startStr = ev.start.dateTime ?? ev.start.date;
-                  const endStr = ev.end.dateTime ?? ev.end.date;
-                  if (!startStr) return null;
-                  const start = new Date(startStr);
-                  const end = endStr ? new Date(endStr) : new Date(start.getTime() + 3600000);
-                  const startHr = start.getHours() + start.getMinutes() / 60;
-                  const endHr = end.getHours() + end.getMinutes() / 60;
-                  if (startHr >= WEEK_HOURS[WEEK_HOURS.length - 1] + 1 || endHr <= WEEK_HOURS[0]) return null;
-                  const clampedStart = Math.max(startHr, WEEK_HOURS[0]);
-                  const clampedEnd = Math.min(endHr, WEEK_HOURS[WEEK_HOURS.length - 1] + 1);
-                  const topPx = (clampedStart - WEEK_HOURS[0]) * ROW_HEIGHT;
-                  const heightPx = Math.max((clampedEnd - clampedStart) * ROW_HEIGHT - 4, 20);
-                  return (
-                    <div key={ev.id} style={{ position: "absolute", top: topPx + 2, height: heightPx, left: "calc(60px + 3px)", width: "calc(100% - 60px - 6px)", background: "#3B5BDB", color: "#fff", border: "2px solid #1C1917", borderRadius: 8, padding: "4px 10px", overflow: "hidden", zIndex: 4 }}>
-                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.85, letterSpacing: 1, marginBottom: 1 }}>{fmtPeriod(start.getTime(), end.getTime())}</div>
-                      <div style={{ fontFamily: "var(--font-serif)", fontSize: 12, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.summary ?? "Event"}</div>
-                    </div>
-                  );
-                })}
-              </>;
-            })()}
+          {/* Hourly grid — scrollable */}
+          <div style={{ maxHeight: "600px", overflowY: "auto" }}>
+          {(() => {
+            const nowHr = today.getHours() + today.getMinutes() / 60;
+            const currentTimePx = (nowHr - WEEK_HOURS[0]) * ROW_HEIGHT;
+            const showCurrentTime = selectedDay.toDateString() === today.toDateString() && nowHr >= WEEK_HOURS[0] && nowHr < WEEK_HOURS[WEEK_HOURS.length - 1] + 1;
+            const s = selectedDay.getTime();
+            const e = s + 24 * 60 * 60 * 1000;
+            const dayTopics = topics?.filter(t => t.nextReview && t.nextReview >= s && t.nextReview < e) ?? [];
+            const daySessions = programSessions?.filter(ps => ps.scheduledAt >= s && ps.scheduledAt < e) ?? [];
+            const dayGEvents = googleEvents.filter(ev => {
+              const str = ev.start.dateTime ?? ev.start.date;
+              if (!str) return false;
+              return new Date(str).toDateString() === selectedDay.toDateString();
+            });
+            return (
+            <div style={{ position: "relative", display: "grid", gridTemplateColumns: "52px 1fr", gridAutoRows: ROW_HEIGHT }}>
+              {WEEK_HOURS.map((h, ri) => (
+                <Fragment key={h}>
+                  <div style={{ paddingRight: 8, fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", textAlign: "right", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", transform: ri > 0 ? "translateY(-7px)" : "none", userSelect: "none" }}>
+                    {ri === 0 ? "" : fmtHr(h)}
+                  </div>
+                  <div style={{ borderLeft: "1px solid rgba(28,25,23,0.1)", borderTop: ri === 0 ? "none" : "1px solid rgba(28,25,23,0.1)", position: "relative" }}>
+                    <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: "rgba(28,25,23,0.04)" }} />
+                  </div>
+                </Fragment>
+              ))}
+              {/* Current time indicator */}
+              {showCurrentTime && (
+                <>
+                  <div style={{ position: "absolute", top: currentTimePx, left: 0, right: 0, height: 2, background: "#E8482C", zIndex: 10, pointerEvents: "none" }} />
+                  <div style={{ position: "absolute", top: currentTimePx - 5, left: "47px", width: 12, height: 12, background: "#E8482C", borderRadius: "50%", zIndex: 10, pointerEvents: "none" }} />
+                </>
+              )}
+              {dayTopics.map((t, i) => {
+                const d = new Date(t.nextReview!);
+                const startHr = Math.max(WEEK_HOURS[0], d.getHours() + d.getMinutes() / 60);
+                const topPx = (startHr - WEEK_HOURS[0]) * ROW_HEIGHT + 1;
+                return (
+                  <div key={`r${i}`} onClick={() => navigate(`/courses/${t.courseId}/topics/${t._id}/study`)}
+                    style={{ position: "absolute", top: topPx, height: Math.max(0.75 * ROW_HEIGHT - 2, 22), left: "calc(52px + 3px)", width: "calc(100% - 52px - 6px)", background: "rgba(232,72,44,0.1)", color: "#E8482C", border: "1.5px solid #E8482C", borderLeft: "4px solid #E8482C", borderRadius: 4, padding: "3px 8px", overflow: "hidden", zIndex: 5, cursor: "pointer" }}
+                  >
+                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 12, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(t.nextReview!, t.nextReview! + 0.75 * 3600000)}</div>
+                  </div>
+                );
+              })}
+              {daySessions.map((ps, i) => {
+                const isCompleted = ps.status === "completed";
+                const d = new Date(ps.scheduledAt);
+                const rawHr = d.getHours() + d.getMinutes() / 60;
+                const startHr = Math.max(WEEK_HOURS[0], rawHr < 1 ? 9 : rawHr);
+                const topPx = (startHr - WEEK_HOURS[0]) * ROW_HEIGHT + 1;
+                const durHr = Math.max(ps.cardCount / 60, 0.25);
+                const color = isCompleted ? "rgba(28,25,23,0.35)" : "#2B7A3E";
+                return (
+                  <div key={`ps${i}`} style={{ position: "absolute", top: topPx, height: Math.max(durHr * ROW_HEIGHT - 2, 22), left: "calc(52px + 3px)", width: "calc(100% - 52px - 6px)", background: isCompleted ? "rgba(28,25,23,0.05)" : "rgba(43,122,62,0.12)", color, border: `1.5px solid ${color}`, borderLeft: `4px solid ${color}`, borderRadius: 4, padding: "3px 8px", overflow: "hidden", zIndex: 5, opacity: isCompleted ? 0.75 : 1 }}>
+                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 12, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isCompleted ? "line-through" : "none" }}>{isCompleted ? "✓ " : ""}Session {ps.sessionNumber}</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(ps.scheduledAt, ps.scheduledAt + ps.cardCount * 60000)}</div>
+                  </div>
+                );
+              })}
+              {dayGEvents.map(ev => {
+                const startStr = ev.start.dateTime ?? ev.start.date;
+                const endStr = ev.end.dateTime ?? ev.end.date;
+                if (!startStr) return null;
+                const start = new Date(startStr);
+                const end = endStr ? new Date(endStr) : new Date(start.getTime() + 3600000);
+                const startHr = start.getHours() + start.getMinutes() / 60;
+                const endHr = end.getHours() + end.getMinutes() / 60;
+                if (startHr >= WEEK_HOURS[WEEK_HOURS.length - 1] + 1 || endHr <= WEEK_HOURS[0]) return null;
+                const clampedStart = Math.max(startHr, WEEK_HOURS[0]);
+                const clampedEnd = Math.min(endHr, WEEK_HOURS[WEEK_HOURS.length - 1] + 1);
+                const topPx = (clampedStart - WEEK_HOURS[0]) * ROW_HEIGHT;
+                const heightPx = Math.max((clampedEnd - clampedStart) * ROW_HEIGHT - 2, 22);
+                return (
+                  <div key={ev.id} style={{ position: "absolute", top: topPx + 1, height: heightPx, left: "calc(52px + 3px)", width: "calc(100% - 52px - 6px)", background: "rgba(59,91,219,0.12)", color: "#3B5BDB", border: "1.5px solid #3B5BDB", borderLeft: "4px solid #3B5BDB", borderRadius: 4, padding: "3px 8px", overflow: "hidden", zIndex: 4 }}>
+                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 12, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.summary ?? "Event"}</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, opacity: 0.8, marginTop: 1 }}>{fmtPeriod(start.getTime(), end.getTime())}</div>
+                  </div>
+                );
+              })}
+            </div>
+            );
+          })()}
           </div>
         </div>
         )}
@@ -793,7 +827,7 @@ function DesktopCalendar({ topics, calendarConnected, googleEvents, eventsLoadin
 
 export function CalendarPage() {
   const topics = useQuery(api.topics.listByUser);
-  const allProgramSessions = useQuery(api.programSessions.getAllUpcomingByUser);
+  const allProgramSessions = useQuery(api.programSessions.getAllByUser);
   const { user } = useUser();
   const calendarConnected = !!(user?.externalAccounts?.find((a) => a.provider === "google"));
   const fetchEvents = useAction(api.googleCalendar.fetchUpcomingEvents);

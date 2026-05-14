@@ -512,8 +512,8 @@ export function HomePage() {
                   <div style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 800, color: "#1C1917", letterSpacing: -0.5 }}>No courses yet.</div>
                   <div style={{ fontFamily: "var(--font-accent)", fontSize: 18, color: "#E8482C", marginTop: 4 }}>Let's fix that!</div>
                 </div>
-                <button onClick={() => navigate("/courses/new")} style={{ padding: "11px 22px", background: "#1C1917", color: "#fff", border: "2.5px solid #1C1917", borderRadius: 12, boxShadow: "4px 4px 0 rgba(28,25,23,0.25)", fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                  + Create a course
+                <button onClick={() => navigate("/courses")} style={{ padding: "11px 22px", background: "#1C1917", color: "#fff", border: "2.5px solid #1C1917", borderRadius: 12, boxShadow: "4px 4px 0 rgba(28,25,23,0.25)", fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                  Go to Courses →
                 </button>
               </motion.div>
             ) : (
@@ -877,8 +877,8 @@ export function HomePage() {
                   <div style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 800, color: "#1C1917", letterSpacing: -0.5 }}>No courses yet</div>
                   <div style={{ fontFamily: "var(--font-accent)", fontSize: 16, color: "#8A8278", marginTop: 4 }}>Create your first course to get started</div>
                 </div>
-                <button onClick={() => navigate("/courses/new")} style={{ padding: "12px 24px", background: "#1C1917", color: "#fff", border: "2px solid #1C1917", borderRadius: 10, boxShadow: "3px 3px 0 rgba(28,25,23,0.25)", fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                  + Create a course
+                <button onClick={() => navigate("/courses")} style={{ padding: "12px 24px", background: "#1C1917", color: "#fff", border: "2px solid #1C1917", borderRadius: 10, boxShadow: "3px 3px 0 rgba(28,25,23,0.25)", fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                  Go to Courses →
                 </button>
               </motion.div>
             ) : (

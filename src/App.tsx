@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useParams } from "react-router-dom";
 import { useConvexAuth, useQuery } from "convex/react";
 import { useRef, useEffect } from "react";
 import { api } from "@/../convex/_generated/api";
@@ -89,6 +89,7 @@ function LoadingScreen() {
       className="flex items-center justify-center min-h-svh"
       style={{ background: "#F5EFE2" }}
     >
+      <style>{`@keyframes logoBeat{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}`}</style>
       <div className="flex flex-col items-center gap-5">
         <div
           className="w-14 h-14 flex items-center justify-center"
@@ -97,6 +98,7 @@ function LoadingScreen() {
             border: "2.5px solid #1C1917",
             boxShadow: "4px 4px 0 #1C1917",
             borderRadius: 14,
+            animation: "logoBeat 1.1s ease-in-out infinite",
           }}
         >
           <span
@@ -106,13 +108,15 @@ function LoadingScreen() {
             R
           </span>
         </div>
-        <div
-          className="w-5 h-5 rounded-full border-2 animate-spin"
-          style={{ borderColor: "#1C1917", borderTopColor: "transparent" }}
-        />
       </div>
     </div>
   );
+}
+
+function StudySessionWrapper() {
+  const [searchParams] = useSearchParams();
+  const { topicId } = useParams();
+  return <StudySessionPage key={`${topicId}-${searchParams.get("sessionId") ?? "free"}-${searchParams.get("all") ?? "0"}`} />;
 }
 
 export function App() {
@@ -129,7 +133,7 @@ export function App() {
         <Route path="/courses/new" element={<RequireAuth><NewCoursePage /></RequireAuth>} />
         <Route path="/courses/:courseId" element={<RequireAuth><CourseDetailPage /></RequireAuth>} />
         <Route path="/courses/:courseId/topics/:topicId" element={<RequireAuth><TopicDetailPage /></RequireAuth>} />
-        <Route path="/courses/:courseId/topics/:topicId/study" element={<RequireAuth><StudySessionPage /></RequireAuth>} />
+        <Route path="/courses/:courseId/topics/:topicId/study" element={<RequireAuth><StudySessionWrapper /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

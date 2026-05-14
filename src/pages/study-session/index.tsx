@@ -24,29 +24,21 @@ export function StudySessionPage() {
 
   const programId = searchParams.get("programId") as Id<"programs"> | null;
   const sessionId = searchParams.get("sessionId") as Id<"programSessions"> | null;
+  const allMode = searchParams.get("all") === "1";
   const storageKey = `study-${topicId}-${programId ?? "free"}`;
-  const startTimeKey = `study-start-${topicId}-${programId ?? "free"}`;
-  const sessionStartTime = useRef((() => {
-    try {
-      const saved = sessionStorage.getItem(startTimeKey);
-      if (saved) return parseInt(saved, 10);
-      const t = Date.now();
-      sessionStorage.setItem(startTimeKey, String(t));
-      return t;
-    } catch { return Date.now(); }
-  })());
+  const sessionStartTime = useRef(Date.now());
 
   const course = useQuery(api.courses.get, { courseId: courseId as Id<"courses"> });
   const topic = useQuery(api.topics.get, { topicId: topicId as Id<"topics"> });
   const dueCards = useQuery(
     api.flashcards.getDueByTopic,
-    !programId ? { topicId: topicId as Id<"topics">, now: sessionStartTime.current } : "skip"
+    !programId && !allMode ? { topicId: topicId as Id<"topics">, now: sessionStartTime.current } : "skip"
   );
   const allCards = useQuery(
     api.flashcards.listByTopic,
-    programId ? { topicId: topicId as Id<"topics"> } : "skip"
+    (programId || allMode) ? { topicId: topicId as Id<"topics"> } : "skip"
   );
-  const cards = programId ? allCards : dueCards;
+  const cards = (programId || allMode) ? allCards : dueCards;
 
   const activeProgram = useQuery(
     api.programs.getActiveByTopic,
@@ -142,9 +134,18 @@ export function StudySessionPage() {
     updateCard({ cardId: currentCard._id, rating, ...newState }); // fire-and-forget
 
     if (currentIdx + 1 >= totalCards) {
-      setDone(true);
       sessionStorage.removeItem(storageKey);
-      sessionStorage.removeItem(startTimeKey);
+
+      // Show next session info immediately from existing data (no await)
+      if (sessionId && programId) {
+        const immediateNext = programSessions
+          ?.filter(s => s.status === "upcoming" && s._id !== sessionId)
+          .sort((a, b) => a.sessionNumber - b.sessionNumber)[0];
+        if (immediateNext) {
+          setNextSessionInfo({ scheduledAt: immediateNext.scheduledAt, sessionNumber: immediateNext.sessionNumber });
+        }
+      }
+      setDone(true);
 
       void (async () => {
         if (studySessionId) await completeSession({ sessionId: studySessionId, cardsStudied: totalCards });
@@ -182,9 +183,9 @@ export function StudySessionPage() {
                   description: `Spaced repetition session ${nextSession.sessionNumber} - ${nextSession.cardCount} cards to review`,
                 }).catch(() => {});
               }
+              // Update with rescheduled time
+              setNextSessionInfo({ scheduledAt: adjustedAt, sessionNumber: nextSession.sessionNumber });
             }
-
-            setNextSessionInfo({ scheduledAt: adjustedAt, sessionNumber: nextSession.sessionNumber });
           }
         }
       })();
@@ -283,7 +284,8 @@ export function StudySessionPage() {
     <>
       {/* Mobile */}
       <div className="flex flex-col md:hidden min-h-svh" style={{ background: "#F5EFE2" }}>
-        <header className="flex items-center gap-3 px-4 pt-12 pb-2">
+        {/* Exit row */}
+        <div className="flex px-4 pt-10 pb-2">
           <button
             onClick={() => navigate(-1)}
             className="w-9 h-9 rounded-lg flex items-center justify-center"
@@ -293,32 +295,46 @@ export function StudySessionPage() {
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold tracking-[1.5px] uppercase truncate" style={{ fontFamily: "var(--font-mono)", color: "#8A8278" }}>
-              {course?.code} · {topic?.name}
-              {programId && currentProgramSession && (
-                <span style={{ marginLeft: 6, color: "#3B5BDB" }}>· SESSION {currentProgramSession.sessionNumber}</span>
+        </div>
+        {/* Topic heading */}
+        <div className="px-5 pb-2">
+          <p className="text-[10px] font-bold tracking-[1.5px] uppercase mb-1" style={{ fontFamily: "var(--font-mono)", color: "#8A8278" }}>
+            {course?.code}{programId && currentProgramSession && ` · SESSION ${currentProgramSession.sessionNumber}`}
+          </p>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 900, color: "#1C1917", letterSpacing: -0.5, lineHeight: 1.1, margin: 0 }}>
+            {topic?.name}
+          </h1>
+        </div>
+        {/* Progress badge */}
+        <div className="flex items-center justify-between px-5 pb-4">
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#8A8278", letterSpacing: 1 }}>
+            {programId && currentProgramSession ? `SESSION ${currentProgramSession.sessionNumber}` : "FREE STUDY"}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ padding: "5px 10px", background: "#fff", color: "#8A8278", borderRadius: 8, fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 12, border: "1.5px solid rgba(28,25,23,0.15)", letterSpacing: 0.5 }}>
+              {formatElapsed(elapsedSecs)}
+            </div>
+            <div style={{ padding: "5px 12px", background: "#1C1917", color: "#F5EFE2", borderRadius: 8, fontFamily: "var(--font-mono)", fontWeight: 800, fontSize: 13, boxShadow: "2px 2px 0 rgba(28,25,23,0.25)", letterSpacing: 0.5 }}>
+              {currentIdx + 1}<span style={{ opacity: 0.45, margin: "0 2px" }}>/</span>{totalCards}
+            </div>
+          </div>
+        </div>
+
+        <main className="flex-1 flex flex-col px-5" style={{ minHeight: 0, paddingBottom: 28 }}>
+          <div style={{ paddingRight: "6px" }}>
+            <AnimatePresence mode="wait">
+              {currentCard && (
+                <motion.div key={currentCard._id} className="w-full"
+                  initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }} transition={{ type: "spring", damping: 22, stiffness: 220 }}>
+                  <FlashCard front={currentCard.front} back={currentCard.back} onFlip={() => setFlipped(true)} />
+                </motion.div>
               )}
-            </p>
+            </AnimatePresence>
           </div>
-          <div className="px-3 py-1 rounded font-bold text-sm" style={{ fontFamily: "var(--font-mono)", background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917" }}>
-            {currentIdx + 1}/{totalCards}
+          <div style={{ marginTop: 20 }}>
+            <RatingButtons onRate={handleRate} visible={flipped} />
           </div>
-        </header>
-
-        <ProgressBar current={currentIdx} total={totalCards} />
-
-        <main className="flex-1 flex flex-col justify-center gap-6 px-5 pb-8">
-          <AnimatePresence mode="wait">
-            {currentCard && (
-              <motion.div key={currentCard._id}
-                initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }} transition={{ type: "spring", damping: 22, stiffness: 220 }}>
-                <FlashCard front={currentCard.front} back={currentCard.back} onFlip={() => setFlipped(true)} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <RatingButtons onRate={handleRate} visible={flipped} />
         </main>
       </div>
 
