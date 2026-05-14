@@ -37,7 +37,10 @@
       "PowerShell(git -C \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\" diff --cached convex/programSessions.ts)",
       "PowerShell(git -C \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\" diff HEAD convex/programSessions.ts)",
       "PowerShell(git -C \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\" status --short)",
-      "Bash(node scripts/gen-icons.mjs)"
+      "Bash(node scripts/gen-icons.mjs)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\\\\public\\\\icons\\\\icon-192x192-maskable.png\" -Force)",
+      "Bash(Remove-Item \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\\\\public\\\\icons\\\\icon-512x512-maskable.png\" -Force)",
+      "Bash(Write-Output \"deleted\")"
     ]
   }
 }
