@@ -192,7 +192,7 @@ export const createProgramEvents = action({
     const user = (await ctx.runQuery(api.users.getMe)) as Doc<"users"> | null;
     if (!user?.googleAccessToken) return { connected: false };
 
-    const title = `Engram: ${args.courseCode} - ${args.topicName}`;
+    const title = `Engraam: ${args.courseCode} - ${args.topicName}`;
 
     for (const session of args.sessions) {
       try {

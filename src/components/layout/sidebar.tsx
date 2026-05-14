@@ -46,9 +46,9 @@ export function Sidebar() {
     }}>
       {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 6px 18px" }}>
-        <img src="/favicon.svg" alt="Engram" style={{ width: 30, height: 30 }} />
+        <img src="/favicon.svg" alt="Engraam" style={{ width: 30, height: 30 }} />
         <div style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 800, letterSpacing: -0.4 }}>
-          Engram
+          Engraam
         </div>
       </div>
 
@@ -181,7 +181,7 @@ export function Sidebar() {
           <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {user?.name ?? "You"}
           </div>
-          <div style={{ fontSize: 10, color: "#8A8278", fontFamily: "var(--font-mono)" }}>Engram</div>
+          <div style={{ fontSize: 10, color: "#8A8278", fontFamily: "var(--font-mono)" }}>Engraam</div>
         </div>
       </div>
     </div>

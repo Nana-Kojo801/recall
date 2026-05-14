@@ -28,7 +28,8 @@
       "Bash(pnpm install *)",
       "Bash(node -e ' *)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\\\\public\" -File)",
-      "Bash(node scripts/generate-icons.mjs)"
+      "Bash(node scripts/generate-icons.mjs)",
+      "Bash(exist \"public\\\\engram-icon-1024.png\" del \"public\\\\engram-icon-1024.png\")"
     ]
   }
 }

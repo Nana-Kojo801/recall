@@ -10,10 +10,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "icons/*.png", "engram-icon-1024.png"],
+      includeAssets: ["favicon.svg", "icons/*.png", "engraam-icon-1024.png"],
       manifest: {
-        name: "Engram — AI Flashcards",
-        short_name: "Engram",
+        name: "Engraam — AI Flashcards",
+        short_name: "Engraam",
         description: "AI-powered flashcards and spaced repetition for university students",
         theme_color: "#F5A623",
         background_color: "#0F1117",
