@@ -1,14 +1,15 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const listByUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("topics")
-      .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .take(200);
   },
 });
@@ -16,8 +17,8 @@ export const listByUser = query({
 export const listByCourse = query({
   args: { courseId: v.id("courses") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("topics")
       .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
@@ -28,10 +29,10 @@ export const listByCourse = query({
 export const get = query({
   args: { topicId: v.id("topics") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
     const topic = await ctx.db.get(args.topicId);
-    if (!topic || topic.userId !== identity.tokenIdentifier) return null;
+    if (!topic || topic.userId !== userId) return null;
     return topic;
   },
 });
@@ -42,11 +43,11 @@ export const create = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     return ctx.db.insert("topics", {
       courseId: args.courseId,
-      userId: identity.tokenIdentifier,
+      userId,
       name: args.name,
     });
   },
@@ -60,10 +61,10 @@ export const update = mutation({
     nextReview: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const topic = await ctx.db.get(args.topicId);
-    if (!topic || topic.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!topic || topic.userId !== userId) throw new Error("Not found");
     const { topicId, ...patch } = args;
     await ctx.db.patch(args.topicId, patch);
   },
@@ -72,10 +73,10 @@ export const update = mutation({
 export const remove = mutation({
   args: { topicId: v.id("topics") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const topic = await ctx.db.get(args.topicId);
-    if (!topic || topic.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!topic || topic.userId !== userId) throw new Error("Not found");
 
     const flashcards = await ctx.db.query("flashcards").withIndex("by_topic", (q) => q.eq("topicId", args.topicId)).collect();
     for (const c of flashcards) await ctx.db.delete(c._id);

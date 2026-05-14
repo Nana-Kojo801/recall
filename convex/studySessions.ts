@@ -1,14 +1,15 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const listByUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("studySessions")
-      .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .take(50);
   },
@@ -20,12 +21,12 @@ export const create = mutation({
     courseId: v.id("courses"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     return ctx.db.insert("studySessions", {
       topicId: args.topicId,
       courseId: args.courseId,
-      userId: identity.tokenIdentifier,
+      userId,
       startedAt: Date.now(),
       cardsStudied: 0,
     });
@@ -39,10 +40,10 @@ export const complete = mutation({
     calendarEventId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const session = await ctx.db.get(args.sessionId);
-    if (!session || session.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!session || session.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(args.sessionId, {
       completedAt: Date.now(),
       cardsStudied: args.cardsStudied,

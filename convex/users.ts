@@ -11,7 +11,6 @@ export const getMe = query({
   },
 });
 
-// Internal: update Google tokens after a refresh
 export const updateGoogleTokens = internalMutation({
   args: {
     userId: v.id("users"),
@@ -32,9 +31,6 @@ export const deleteAccount = mutation({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-    const uid = identity.tokenIdentifier;
 
     // Clean up auth tables so re-signup doesn't hit orphaned references
     const authAccountEntries = await ctx.db
@@ -51,7 +47,7 @@ export const deleteAccount = mutation({
 
     const uploads = await ctx.db
       .query("materialUploads")
-      .withIndex("by_user", (q) => q.eq("userId", uid))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     for (const u of uploads) {
       if (u.storageId) await ctx.storage.delete(u.storageId);
@@ -60,39 +56,39 @@ export const deleteAccount = mutation({
 
     const cards = await ctx.db
       .query("flashcards")
-      .withIndex("by_user", (q) => q.eq("userId", uid))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     for (const c of cards) await ctx.db.delete(c._id);
 
     for (const status of ["upcoming", "completed", "missed"] as const) {
       const sessions = await ctx.db
         .query("programSessions")
-        .withIndex("by_user_and_status", (q) => q.eq("userId", uid).eq("status", status))
+        .withIndex("by_user_and_status", (q) => q.eq("userId", userId).eq("status", status))
         .collect();
       for (const s of sessions) await ctx.db.delete(s._id);
     }
 
     const sSessions = await ctx.db
       .query("studySessions")
-      .withIndex("by_user", (q) => q.eq("userId", uid))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     for (const s of sSessions) await ctx.db.delete(s._id);
 
     const programs = await ctx.db
       .query("programs")
-      .withIndex("by_user", (q) => q.eq("userId", uid))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     for (const p of programs) await ctx.db.delete(p._id);
 
     const topics = await ctx.db
       .query("topics")
-      .withIndex("by_user", (q) => q.eq("userId", uid))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     for (const t of topics) await ctx.db.delete(t._id);
 
     const courses = await ctx.db
       .query("courses")
-      .withIndex("by_user", (q) => q.eq("userId", uid))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     for (const c of courses) await ctx.db.delete(c._id);
 
@@ -100,7 +96,6 @@ export const deleteAccount = mutation({
   },
 });
 
-// Legacy no-ops — kept so clerkWebhook.ts references don't break until it's removed
 export const upsertFromClerk = internalMutation({
   args: {
     clerkId: v.string(),

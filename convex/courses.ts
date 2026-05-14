@@ -1,14 +1,15 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("courses")
-      .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .take(100);
   },
 });
@@ -16,10 +17,10 @@ export const list = query({
 export const get = query({
   args: { courseId: v.id("courses") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
     const course = await ctx.db.get(args.courseId);
-    if (!course || course.userId !== identity.tokenIdentifier) return null;
+    if (!course || course.userId !== userId) return null;
     return course;
   },
 });
@@ -31,10 +32,10 @@ export const create = mutation({
     color: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     return ctx.db.insert("courses", {
-      userId: identity.tokenIdentifier,
+      userId,
       name: args.name,
       code: args.code,
       color: args.color,
@@ -50,10 +51,10 @@ export const update = mutation({
     color: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const course = await ctx.db.get(args.courseId);
-    if (!course || course.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!course || course.userId !== userId) throw new Error("Not found");
     const { courseId, ...patch } = args;
     await ctx.db.patch(args.courseId, patch);
   },
@@ -62,10 +63,10 @@ export const update = mutation({
 export const remove = mutation({
   args: { courseId: v.id("courses") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const course = await ctx.db.get(args.courseId);
-    if (!course || course.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!course || course.userId !== userId) throw new Error("Not found");
     await ctx.db.delete(args.courseId);
   },
 });
@@ -73,10 +74,10 @@ export const remove = mutation({
 export const removeWithCascade = mutation({
   args: { courseId: v.id("courses") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const course = await ctx.db.get(args.courseId);
-    if (!course || course.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!course || course.userId !== userId) throw new Error("Not found");
 
     const topics = await ctx.db.query("topics").withIndex("by_course", (q) => q.eq("courseId", args.courseId)).collect();
     for (const topic of topics) {

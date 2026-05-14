@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const create = mutation({
   args: {
@@ -10,12 +11,12 @@ export const create = mutation({
     totalSessions: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     return ctx.db.insert("programs", {
       topicId: args.topicId,
       courseId: args.courseId,
-      userId: identity.tokenIdentifier,
+      userId,
       startDate: args.startDate,
       endDate: args.endDate,
       currentSession: 1,
@@ -28,8 +29,8 @@ export const create = mutation({
 export const getActiveByTopic = query({
   args: { topicId: v.id("topics") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
     const programs = await ctx.db
       .query("programs")
       .withIndex("by_topic", (q) => q.eq("topicId", args.topicId))
@@ -42,10 +43,10 @@ export const getActiveByTopic = query({
 export const advanceSession = mutation({
   args: { programId: v.id("programs") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const program = await ctx.db.get(args.programId);
-    if (!program || program.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!program || program.userId !== userId) throw new Error("Not found");
     const next = program.currentSession + 1;
     if (next > program.totalSessions) {
       await ctx.db.patch(args.programId, { status: "completed" });
@@ -58,10 +59,10 @@ export const advanceSession = mutation({
 export const complete = mutation({
   args: { programId: v.id("programs") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const program = await ctx.db.get(args.programId);
-    if (!program || program.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!program || program.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(args.programId, { status: "completed" });
   },
 });

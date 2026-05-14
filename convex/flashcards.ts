@@ -1,14 +1,15 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const listByUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("flashcards")
-      .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .take(500);
   },
 });
@@ -16,8 +17,8 @@ export const listByUser = query({
 export const listByTopic = query({
   args: { topicId: v.id("topics") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("flashcards")
       .withIndex("by_topic", (q) => q.eq("topicId", args.topicId))
@@ -28,8 +29,8 @@ export const listByTopic = query({
 export const getDueByTopic = query({
   args: { topicId: v.id("topics"), now: v.number() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("flashcards")
       .withIndex("by_topic_and_next_review", (q) =>
@@ -45,14 +46,14 @@ export const bulkCreate = mutation({
     cards: v.array(v.object({ front: v.string(), back: v.string() })),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const now = Date.now();
     const ids = [];
     for (const card of args.cards) {
       const id = await ctx.db.insert("flashcards", {
         topicId: args.topicId,
-        userId: identity.tokenIdentifier,
+        userId,
         front: card.front,
         back: card.back,
         interval: 0,
@@ -76,10 +77,10 @@ export const updateAfterRating = mutation({
     nextReview: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const card = await ctx.db.get(args.cardId);
-    if (!card || card.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!card || card.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(args.cardId, {
       interval: args.interval,
       easeFactor: args.easeFactor,
@@ -93,10 +94,10 @@ export const updateAfterRating = mutation({
 export const remove = mutation({
   args: { cardId: v.id("flashcards") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const card = await ctx.db.get(args.cardId);
-    if (!card || card.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!card || card.userId !== userId) throw new Error("Not found");
     await ctx.db.delete(args.cardId);
   },
 });
@@ -104,15 +105,15 @@ export const remove = mutation({
 export const removeAll = mutation({
   args: { topicId: v.id("topics") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
 
     const cards = await ctx.db
       .query("flashcards")
       .withIndex("by_topic", (q) => q.eq("topicId", args.topicId))
       .collect();
     for (const card of cards) {
-      if (card.userId !== identity.tokenIdentifier) continue;
+      if (card.userId !== userId) continue;
       await ctx.db.delete(card._id);
     }
 
@@ -121,7 +122,7 @@ export const removeAll = mutation({
       .withIndex("by_topic", (q) => q.eq("topicId", args.topicId))
       .collect();
     for (const s of pSessions) {
-      if (s.userId !== identity.tokenIdentifier) continue;
+      if (s.userId !== userId) continue;
       await ctx.db.delete(s._id);
     }
 
@@ -130,7 +131,7 @@ export const removeAll = mutation({
       .withIndex("by_topic", (q) => q.eq("topicId", args.topicId))
       .collect();
     for (const p of programs) {
-      if (p.userId !== identity.tokenIdentifier) continue;
+      if (p.userId !== userId) continue;
       await ctx.db.delete(p._id);
     }
   },

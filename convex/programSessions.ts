@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const createBatch = mutation({
   args: {
@@ -12,14 +13,14 @@ export const createBatch = mutation({
     })),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const ids: string[] = [];
     for (const s of args.sessions) {
       const id = await ctx.db.insert("programSessions", {
         programId: args.programId,
         topicId: args.topicId,
-        userId: identity.tokenIdentifier,
+        userId,
         sessionNumber: s.sessionNumber,
         scheduledAt: s.scheduledAt,
         cardCount: s.cardCount,
@@ -34,8 +35,8 @@ export const createBatch = mutation({
 export const listByTopic = query({
   args: { topicId: v.id("topics") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("programSessions")
       .withIndex("by_topic", (q) => q.eq("topicId", args.topicId))
@@ -46,8 +47,8 @@ export const listByTopic = query({
 export const listByProgram = query({
   args: { programId: v.id("programs") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("programSessions")
       .withIndex("by_program", (q) => q.eq("programId", args.programId))
@@ -58,12 +59,12 @@ export const listByProgram = query({
 export const getAllUpcomingByUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     return ctx.db
       .query("programSessions")
       .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", identity.tokenIdentifier).eq("status", "upcoming")
+        q.eq("userId", userId).eq("status", "upcoming")
       )
       .collect();
   },
@@ -72,13 +73,13 @@ export const getAllUpcomingByUser = query({
 export const getUpcomingByUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     const now = Date.now();
     return ctx.db
       .query("programSessions")
       .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", identity.tokenIdentifier).eq("status", "upcoming")
+        q.eq("userId", userId).eq("status", "upcoming")
       )
       .filter((q) => q.gt(q.field("scheduledAt"), now))
       .take(5);
@@ -88,13 +89,13 @@ export const getUpcomingByUser = query({
 export const getDueByUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     const now = Date.now();
     return ctx.db
       .query("programSessions")
       .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", identity.tokenIdentifier).eq("status", "upcoming")
+        q.eq("userId", userId).eq("status", "upcoming")
       )
       .filter((q) => q.lte(q.field("scheduledAt"), now))
       .take(20);
@@ -107,10 +108,10 @@ export const complete = mutation({
     calendarEventId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const session = await ctx.db.get(args.sessionId);
-    if (!session || session.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!session || session.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(args.sessionId, {
       status: "completed",
       completedAt: Date.now(),
@@ -125,10 +126,10 @@ export const reschedule = mutation({
     scheduledAt: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const session = await ctx.db.get(args.sessionId);
-    if (!session || session.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!session || session.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(args.sessionId, { scheduledAt: args.scheduledAt });
   },
 });
@@ -136,24 +137,24 @@ export const reschedule = mutation({
 export const getAllByUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
     const upcoming = await ctx.db
       .query("programSessions")
       .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", identity.tokenIdentifier).eq("status", "upcoming")
+        q.eq("userId", userId).eq("status", "upcoming")
       )
       .collect();
     const completed = await ctx.db
       .query("programSessions")
       .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", identity.tokenIdentifier).eq("status", "completed")
+        q.eq("userId", userId).eq("status", "completed")
       )
       .collect();
     const missed = await ctx.db
       .query("programSessions")
       .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", identity.tokenIdentifier).eq("status", "missed")
+        q.eq("userId", userId).eq("status", "missed")
       )
       .collect();
     return [...upcoming, ...completed, ...missed];
@@ -166,10 +167,10 @@ export const setCalendarEvent = mutation({
     calendarEventId: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
     const session = await ctx.db.get(args.sessionId);
-    if (!session || session.userId !== identity.tokenIdentifier) throw new Error("Not found");
+    if (!session || session.userId !== userId) throw new Error("Not found");
     await ctx.db.patch(args.sessionId, { calendarEventId: args.calendarEventId });
   },
 });

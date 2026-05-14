@@ -76,12 +76,14 @@ function SessionNotifier() {
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isLoading, isAuthenticated } = useConvexAuth();
-  // Once authenticated, don't flicker back to loader if Convex briefly re-checks auth
+  const user = useQuery(api.users.getMe);
   const everAuthenticated = useRef(false);
   if (isAuthenticated) everAuthenticated.current = true;
 
   if (isLoading && !everAuthenticated.current) return <LoadingScreen />;
   if (!isAuthenticated && !isLoading) return <Navigate to="/auth" replace />;
+  // Session exists but user doc was deleted — ghost session
+  if (isAuthenticated && !isLoading && user === null) return <Navigate to="/auth" replace />;
   return <><SessionNotifier />{children}</>;
 }
 
