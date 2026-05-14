@@ -16,7 +16,7 @@ export default defineConfig({
         short_name: "Engraam",
         description: "AI-powered flashcards and spaced repetition for university students",
         theme_color: "#F5A623",
-        background_color: "#0F1117",
+        background_color: "#F5A623",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
