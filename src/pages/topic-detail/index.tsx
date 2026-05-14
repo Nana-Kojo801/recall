@@ -627,8 +627,11 @@ export function TopicDetailPage() {
                 Upload Material
               </button>
               {uploads && uploads.length > 0 && (
-                <button onClick={() => setFilesOpen(true)} style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#3B5BDB", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                  {uploads.length} file{uploads.length !== 1 ? "s" : ""} ↗
+                <button onClick={() => setFilesOpen(true)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", background: "#3B5BDB", color: "#fff", border: "2px solid #1C1917", borderRadius: 8, boxShadow: "2px 2px 0 #1C1917", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  {uploads.length} file{uploads.length !== 1 ? "s" : ""}
                 </button>
               )}
             </div>
@@ -834,8 +837,11 @@ export function TopicDetailPage() {
                   Upload Material
                 </button>
                 {uploads && uploads.length > 0 && (
-                  <button onClick={() => setFilesOpen(true)} style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#3B5BDB", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    {uploads.length} file{uploads.length !== 1 ? "s" : ""} ↗
+                  <button onClick={() => setFilesOpen(true)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", background: "#3B5BDB", color: "#fff", border: "2px solid #1C1917", borderRadius: 8, boxShadow: "2px 2px 0 #1C1917", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, cursor: "pointer" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    {uploads.length} file{uploads.length !== 1 ? "s" : ""}
                   </button>
                 )}
               </div>

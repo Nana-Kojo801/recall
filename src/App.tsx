@@ -40,7 +40,7 @@ function SessionNotifier() {
       if (!topic) continue;
       new Notification("Study session due now", {
         body: `Session ${session.sessionNumber} for ${topic.name} is ready`,
-        icon: "/favicon.ico",
+        icon: "/icons/icon-192x192.png",
         tag: key,
       });
       _notifiedDue.add(key);
@@ -62,7 +62,7 @@ function SessionNotifier() {
         const topic = topics.find((tp) => tp._id === session.topicId);
         new Notification("Study session in 15 minutes", {
           body: `Session ${session.sessionNumber} for ${topic?.name ?? "your topic"} starts soon`,
-          icon: "/favicon.ico",
+          icon: "/icons/icon-192x192.png",
           tag: warningKey,
         });
       }, msUntilWarning);

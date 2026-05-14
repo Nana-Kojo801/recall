@@ -97,10 +97,14 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
     if (inputRef.current) inputRef.current.value = "";
   };
 
+  const isActive = status !== "generating" && status !== "done";
+  const fileReady = status === "ready";
+  const isBusy = status === "reading" || status === "uploading";
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Focus hint + max cards */}
-      {(status === "idle" || status === "ready") && (
+      {/* Focus hint + max cards — always visible when active */}
+      {isActive && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
             <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: "#8A8278", textTransform: "uppercase", marginBottom: 6 }}>
@@ -140,22 +144,22 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
         </div>
       )}
 
-      {/* Drop zone — idle or reading/uploading */}
-      {(status === "idle" || status === "reading" || status === "uploading") && (
+      {/* Drop zone — always visible when active */}
+      {isActive && (
         <div
-          onClick={() => status === "idle" && inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+          onClick={() => !isBusy && inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); if (!isBusy) setDragging(true); }}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
-          className="relative flex flex-col items-center justify-center gap-3 p-8 rounded-[14px] transition-all duration-200"
+          className="relative flex flex-col items-center justify-center gap-3 p-8 rounded-card transition-all duration-200"
           style={{
-            background: dragging ? "rgba(232,72,44,0.06)" : "#fff",
-            border: `2px ${dragging ? "solid" : "dashed"} ${dragging ? "#E8482C" : "#1C1917"}`,
-            boxShadow: dragging ? "4px 4px 0 #E8482C" : "2px 2px 0 rgba(28,25,23,0.15)",
-            cursor: status === "idle" ? "pointer" : "default",
+            background: dragging ? "rgba(232,72,44,0.06)" : fileReady ? "rgba(43,122,62,0.04)" : "#fff",
+            border: `2px ${dragging ? "solid" : "dashed"} ${dragging ? "#E8482C" : fileReady ? "#2B7A3E" : "#1C1917"}`,
+            boxShadow: dragging ? "4px 4px 0 #E8482C" : fileReady ? "2px 2px 0 #2B7A3E" : "2px 2px 0 rgba(28,25,23,0.15)",
+            cursor: isBusy ? "default" : "pointer",
           }}
         >
-          {(status === "reading" || status === "uploading") ? (
+          {isBusy ? (
             <>
               <div className="flex gap-2">
                 {[0, 1, 2].map((i) => (
@@ -166,9 +170,22 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
                 {status === "reading" ? "Reading file…" : "Uploading…"}
               </p>
             </>
+          ) : fileReady ? (
+            <>
+              <div className="w-12 h-12 rounded-button flex items-center justify-center" style={{ background: "rgba(43,122,62,0.1)", border: "2px solid #2B7A3E", boxShadow: "2px 2px 0 #2B7A3E" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2B7A3E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-sm" style={{ color: "#2B7A3E" }}>File ready</p>
+                <p className="text-[11px] font-semibold mt-0.5" style={{ fontFamily: "var(--font-mono)", color: "#8A8278" }}>{fileName}</p>
+                <p className="text-[10px] mt-1.5" style={{ fontFamily: "var(--font-mono)", color: "#8A8278", opacity: 0.7 }}>Click to change file</p>
+              </div>
+            </>
           ) : (
             <>
-              <div className="w-12 h-12 rounded-[10px] flex items-center justify-center" style={{ background: "#F5EFE2", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917" }}>
+              <div className="w-12 h-12 rounded-button flex items-center justify-center" style={{ background: "#F5EFE2", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917" }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E8482C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
                   <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
@@ -190,21 +207,20 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
         </div>
       )}
 
-      {/* Ready — file uploaded, waiting to generate */}
-      {status === "ready" && (
-        <div style={{ padding: "14px 16px", background: "#FBF6EA", border: "2px solid #1C1917", borderRadius: 12, boxShadow: "2px 2px 0 rgba(28,25,23,0.15)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2B7A3E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, color: "#2B7A3E" }}>File uploaded</span>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", marginLeft: 4, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fileName}</span>
-            <button onClick={reset} style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", background: "none", border: "none", cursor: "pointer", padding: 0, flexShrink: 0 }}>Change ✕</button>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <Button variant="secondary" className="flex-1" onClick={() => { reset(); onCancel?.(); }}>Cancel</Button>
-            <Button variant="primary" className="flex-1" onClick={handleGenerate}>Generate Flashcards →</Button>
-          </div>
+      {/* Generate + Cancel — shown when active and not error */}
+      {isActive && status !== "error" && (
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button variant="secondary" className="flex-1" onClick={() => { reset(); onCancel?.(); }}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            className="flex-1"
+            disabled={!fileReady}
+            onClick={handleGenerate}
+          >
+            {fileReady ? "Generate Flashcards →" : "Upload file first"}
+          </Button>
         </div>
       )}
 
@@ -224,7 +240,7 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
       {/* Done */}
       {status === "done" && (
         <motion.div
-          className="flex items-center gap-3 px-4 py-3 rounded-[10px]"
+          className="flex items-center gap-3 px-4 py-3 rounded-button"
           style={{ background: "rgba(43,122,62,0.1)", border: "2px solid #2B7A3E" }}
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -240,7 +256,7 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
       {/* Error */}
       {status === "error" && (
         <motion.div
-          className="flex items-center gap-3 px-4 py-3 rounded-[10px]"
+          className="flex items-center gap-3 px-4 py-3 rounded-button"
           style={{ background: "rgba(232,72,44,0.1)", border: "2px solid #E8482C" }}
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
