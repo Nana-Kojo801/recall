@@ -16,6 +16,7 @@ import type * as flashcards from "../flashcards.js";
 import type * as googleCalendar from "../googleCalendar.js";
 import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
+import type * as notifications from "../notifications.js";
 import type * as programSessions from "../programSessions.js";
 import type * as programs from "../programs.js";
 import type * as push from "../push.js";
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   googleCalendar: typeof googleCalendar;
   http: typeof http;
   migrations: typeof migrations;
+  notifications: typeof notifications;
   programSessions: typeof programSessions;
   programs: typeof programs;
   push: typeof push;

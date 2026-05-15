@@ -688,17 +688,6 @@ export function HomePage() {
           <div style={{ height: 16 }} />
         </div>
 
-        {/* Notifications sheet (mobile) */}
-        <RightSheet open={notifOpen} onOpenChange={setNotifOpen} title="Notifications" width="100vw">
-          <NotificationsSheetContent
-            notifications={notifications}
-            unreadCount={unreadCount}
-            onMarkRead={(id) => void markRead({ notificationId: id as never })}
-            onMarkAllRead={() => void markAllRead({})}
-            onClearAll={() => void clearAll({})}
-          />
-        </RightSheet>
-
         <BottomNav />
       </div>
 
@@ -1029,17 +1018,6 @@ export function HomePage() {
             </div>
           )}
 
-          {/* Notifications sheet (desktop) */}
-          <RightSheet open={notifOpen} onOpenChange={setNotifOpen} title="Notifications" width={380}>
-            <NotificationsSheetContent
-              notifications={notifications}
-              unreadCount={unreadCount}
-              onMarkRead={(id) => void markRead({ notificationId: id as never })}
-              onMarkAllRead={() => void markAllRead({})}
-              onClearAll={() => void clearAll({})}
-            />
-          </RightSheet>
-
           {/* Courses row */}
           <div style={{ padding: "0 28px 28px" }}>
             <div
@@ -1112,6 +1090,17 @@ export function HomePage() {
           </div>
         </main>
       </div>
+
+      {/* Single shared notifications sheet — portal renders outside layout so CSS display:none doesn't isolate it */}
+      <RightSheet open={notifOpen} onOpenChange={setNotifOpen} title="Notifications" width="min(380px, 100vw)">
+        <NotificationsSheetContent
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkRead={(id) => void markRead({ notificationId: id as never })}
+          onMarkAllRead={() => void markAllRead({})}
+          onClearAll={() => void clearAll({})}
+        />
+      </RightSheet>
     </>
   );
 }

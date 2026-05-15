@@ -399,7 +399,7 @@ function MobileCalendar({
             style={{ position: "relative", padding: "18px 20px 0" }}
           >
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-              <div style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 700, color: "#1C1917" }}>Upcoming reviews</div>
+              <div style={{ fontFamily: "var(--font-serif)", fontSize: 17, fontWeight: 700, color: "#1C1917" }}>Upcoming reviews</div>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", letterSpacing: 1 }}>{sectionLabel}</div>
             </div>
             {reviewsToShow.length === 0 ? (
@@ -428,8 +428,8 @@ function MobileCalendar({
                     >
                       <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8482C", flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: isToday ? "#E8482C" : "#8A8278", marginTop: 2, fontWeight: 700 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: isToday ? "#E8482C" : "#8A8278", marginTop: 2, fontWeight: 700 }}>
                           {isToday ? "TODAY" : reviewDate?.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()} · ~45 min
                         </div>
                       </div>
@@ -449,7 +449,7 @@ function MobileCalendar({
       <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px 0" }}>
         <div style={{ display: "flex", background: "#fff", border: "2px solid #1C1917", borderRadius: 8, overflow: "hidden" }}>
           {(["week", "day"] as const).map(m => (
-            <button key={m} onClick={() => setViewMode(m)} style={{ padding: "8px 16px", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, cursor: "pointer", border: "none", background: viewMode === m ? "#1C1917" : "#fff", color: viewMode === m ? "#fff" : "#8A8278", letterSpacing: 0.5 }}>
+            <button key={m} onClick={() => setViewMode(m)} style={{ padding: "10px 18px", fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, cursor: "pointer", border: "none", background: viewMode === m ? "#1C1917" : "#fff", color: viewMode === m ? "#fff" : "#8A8278", letterSpacing: 0.5 }}>
               {m.toUpperCase()}
             </button>
           ))}
@@ -461,7 +461,7 @@ function MobileCalendar({
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", letterSpacing: 0.5, textAlign: "center", minWidth: viewMode === "week" ? 120 : 90 }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#8A8278", letterSpacing: 0.5, textAlign: "center", minWidth: viewMode === "week" ? 120 : 90 }}>
             {viewMode === "week" ? weekLabel : dayLabel}
           </div>
           <button
@@ -482,7 +482,7 @@ function MobileCalendar({
           transition={{ duration: 0.22, delay: 0.08 }}
           style={{ position: "relative", padding: "18px 20px 100px" }}
         >
-          <div style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 700, marginBottom: 10, color: "#1C1917" }}>
+          <div style={{ fontFamily: "var(--font-serif)", fontSize: 17, fontWeight: 700, marginBottom: 10, color: "#1C1917" }}>
             {weekLabel}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -502,12 +502,12 @@ function MobileCalendar({
               return (
                 <div key={day.toISOString()} style={{ borderRadius: 12, background: hasContent ? "#fff" : "transparent", border: hasContent ? "2px solid #1C1917" : "2px dashed rgba(28,25,23,0.2)", boxShadow: hasContent ? "2px 2px 0 #1C1917" : "none", overflow: "hidden" }}>
                   {/* Day header */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: hasContent ? "1.5px solid rgba(28,25,23,0.1)" : "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderBottom: hasContent ? "1.5px solid rgba(28,25,23,0.1)" : "none" }}>
                     <div style={{ width: 44, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, color: isToday ? "#E8482C" : "#8A8278" }}>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: isToday ? "#E8482C" : "#8A8278" }}>
                         {day.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}
                       </div>
-                      <div style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 800, color: isToday ? "#E8482C" : "#1C1917", lineHeight: 1 }}>
+                      <div style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 800, color: isToday ? "#E8482C" : "#1C1917", lineHeight: 1 }}>
                         {day.getDate()}
                       </div>
                     </div>
@@ -528,14 +528,14 @@ function MobileCalendar({
                             topicId: t._id,
                             courseId: t.courseId,
                           })}
-                          style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", background: "transparent", border: "none", borderTop: ti === 0 ? "none" : "1px solid rgba(28,25,23,0.06)", cursor: "pointer", textAlign: "left", width: "100%" }}
+                          style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "transparent", border: "none", borderTop: ti === 0 ? "none" : "1px solid rgba(28,25,23,0.06)", cursor: "pointer", textAlign: "left", width: "100%" }}
                         >
                           <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8482C", flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: 600, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
-                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#E8482C", marginTop: 1 }}>REVIEW · ~45 min</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#E8482C", marginTop: 1 }}>REVIEW · ~45 min</div>
                           </div>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                         </button>
                       ))}
                       {daySessions.map((ps, si) => {
@@ -559,14 +559,14 @@ function MobileCalendar({
                               sessionId: ps._id,
                               programId: ps.programId,
                             })}
-                            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", background: "transparent", border: "none", borderTop: `1px solid rgba(28,25,23,0.06)`, cursor: "pointer", textAlign: "left", width: "100%" }}
+                            style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "transparent", border: "none", borderTop: `1px solid rgba(28,25,23,0.06)`, cursor: "pointer", textAlign: "left", width: "100%" }}
                           >
                             <div style={{ width: 6, height: 6, borderRadius: "50%", background: isCompleted ? "#8A8278" : "#2B7A3E", flexShrink: 0 }} />
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 600, color: isCompleted ? "#8A8278" : "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isCompleted ? "line-through" : "none" }}>{sessionLabel}</div>
-                              <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: isCompleted ? "#8A8278" : "#2B7A3E", marginTop: 1 }}>{isCompleted ? "DONE" : "SESSION"} · {fmtPeriod(ps.scheduledAt, ps.scheduledAt + ps.cardCount * 60000)}</div>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: isCompleted ? "#8A8278" : "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isCompleted ? "line-through" : "none" }}>{sessionLabel}</div>
+                              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: isCompleted ? "#8A8278" : "#2B7A3E", marginTop: 1 }}>{isCompleted ? "DONE" : "SESSION"} · {fmtPeriod(ps.scheduledAt, ps.scheduledAt + ps.cardCount * 60000)}</div>
                             </div>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                           </button>
                         );
                       })}
@@ -585,14 +585,14 @@ function MobileCalendar({
                               endMs,
                               color: "#3B5BDB",
                             })}
-                            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", background: "transparent", border: "none", borderTop: `1px solid rgba(28,25,23,0.06)`, cursor: "pointer", textAlign: "left", width: "100%" }}
+                            style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "transparent", border: "none", borderTop: `1px solid rgba(28,25,23,0.06)`, cursor: "pointer", textAlign: "left", width: "100%" }}
                           >
                             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#3B5BDB", flexShrink: 0 }} />
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 600, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.summary ?? "Event"}</div>
-                              <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#3B5BDB", marginTop: 1 }}>CALENDAR · {fmtPeriod(startMs, endMs)}</div>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.summary ?? "Event"}</div>
+                              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#3B5BDB", marginTop: 1 }}>CALENDAR · {fmtPeriod(startMs, endMs)}</div>
                             </div>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                           </button>
                         );
                       })}
@@ -615,7 +615,7 @@ function MobileCalendar({
           transition={{ duration: 0.22, delay: 0.08 }}
           style={{ position: "relative", padding: "18px 20px 100px" }}
         >
-          <div style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 700, marginBottom: 10, color: "#1C1917" }}>
+          <div style={{ fontFamily: "var(--font-serif)", fontSize: 17, fontWeight: 700, marginBottom: 10, color: "#1C1917" }}>
             {dayLabel}
           </div>
           {(() => {
@@ -688,18 +688,18 @@ function MobileCalendar({
                     onClick={() => openEvent(ev)}
                     style={{ display: "flex", alignItems: "center", gap: 0, padding: 0, background: "transparent", border: "none", cursor: "pointer", textAlign: "left", width: "100%", borderRadius: 12 }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: ev.completed ? "rgba(28,25,23,0.04)" : "#fff", border: "2px solid #1C1917", borderLeft: `4px solid ${ev.color}`, borderRadius: 12, boxShadow: "2px 2px 0 #1C1917", opacity: ev.completed ? 0.75 : 1, width: "100%" }}>
-                      <div style={{ width: 52, flexShrink: 0 }}>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, color: ev.color, letterSpacing: 0.5 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: ev.completed ? "rgba(28,25,23,0.04)" : "#fff", border: "2px solid #1C1917", borderLeft: `4px solid ${ev.color}`, borderRadius: 12, boxShadow: "2px 2px 0 #1C1917", opacity: ev.completed ? 0.75 : 1, width: "100%" }}>
+                      <div style={{ width: 54, flexShrink: 0 }}>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, color: ev.color, letterSpacing: 0.5 }}>
                           {ev.completed ? "DONE" : ev.type === "review" ? "REVIEW" : ev.type === "session" ? "SESSION" : "CALENDAR"}
                         </div>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", marginTop: 1 }}>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#8A8278", marginTop: 1 }}>
                           {fmtHr(ev.hour, ev.minute)}
                         </div>
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: "var(--font-serif)", fontSize: 13, fontWeight: 700, color: ev.completed ? "#8A8278" : "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: ev.completed ? "line-through" : "none" }}>{ev.label}</div>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: ev.color, marginTop: 1 }}>{fmtPeriod(ev.startMs, ev.endMs)}</div>
+                        <div style={{ fontFamily: "var(--font-serif)", fontSize: 14, fontWeight: 700, color: ev.completed ? "#8A8278" : "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: ev.completed ? "line-through" : "none" }}>{ev.label}</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: ev.color, marginTop: 1 }}>{fmtPeriod(ev.startMs, ev.endMs)}</div>
                       </div>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                     </div>
