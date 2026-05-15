@@ -19,7 +19,6 @@ export function CourseForm() {
   const createCourse = useMutation(api.courses.create);
 
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
   const [color, setColor] = useState("#E8482C");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,11 +26,10 @@ export function CourseForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return setError("Course name is required");
-    if (!code.trim()) return setError("Course code is required");
     setLoading(true);
     setError("");
     try {
-      const id = await createCourse({ name: name.trim(), code: code.trim().toUpperCase(), color });
+      const id = await createCourse({ name: name.trim(), color });
       navigate(`/courses/${id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create course");
@@ -53,7 +51,7 @@ export function CourseForm() {
           className="text-[10px] font-bold tracking-[1.5px] uppercase"
           style={{ fontFamily: "var(--font-mono)", color: "rgba(255,255,255,0.8)" }}
         >
-          {code || "CODE"} · PREVIEW
+          PREVIEW
         </p>
         <p
           className="mt-1 font-black text-2xl leading-tight"
@@ -75,14 +73,6 @@ export function CourseForm() {
           onChange={(e) => setName(e.target.value)}
           autoFocus
         />
-        <Input
-          id="code"
-          label="Course code"
-          placeholder="e.g. CS3200"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        />
-
         <div className="flex flex-col gap-2">
           <label
             className="text-[10px] font-bold tracking-[1.5px] uppercase"

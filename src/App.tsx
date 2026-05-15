@@ -17,11 +17,12 @@ import { StatsPage } from "./pages/stats";
 import { PrivacyPage } from "./pages/privacy";
 import { TermsPage } from "./pages/terms";
 
-// Module-level sets survive route changes (component remounts)
+// Tracks FIRED notifications — prevents duplicates across remounts
 const _notifiedDue = new Set<string>();
-const _scheduledWarnings = new Set<string>();
-const _scheduledDue = new Set<string>();
 const _notifiedReviews = new Set<string>();
+// Tracks PENDING timers — cleared on unmount so they get rescheduled on remount
+const _pendingWarnings = new Set<string>();
+const _pendingDue = new Set<string>();
 
 function SessionNotifier() {
   const dueSessions = useQuery(api.programSessions.getDueByUser);
@@ -72,45 +73,53 @@ function SessionNotifier() {
     if (!upcomingSessions || !topics) return;
     const now = Date.now();
     const timers: ReturnType<typeof setTimeout>[] = [];
-    for (const session of upcomingSessions) {
-      const warningKey = `warn-${session._id}`;
-      if (!_scheduledWarnings.has(warningKey)) {
-        const msUntilWarning = session.scheduledAt - 10 * 60 * 1000 - now;
-        if (msUntilWarning > 0) {
-          _scheduledWarnings.add(warningKey);
-          const t = setTimeout(() => {
-            if (!("Notification" in window) || Notification.permission !== "granted") return;
-            const topic = topics.find((tp) => tp._id === session.topicId);
-            playNotificationSound();
-            new Notification("Study session starting soon", {
-              body: `Session ${session.sessionNumber} for ${topic?.name ?? "your topic"} starts in 10 minutes`,
-              icon: "/session-notif.svg",
-              tag: warningKey,
-            });
-          }, msUntilWarning);
-          timers.push(t);
-        }
-      }
-      const dueKey = `due-sched-${session._id}`;
-      if (!_scheduledDue.has(dueKey)) {
-        const msUntilDue = session.scheduledAt - now;
-        if (msUntilDue > 0) {
-          _scheduledDue.add(dueKey);
-          const t = setTimeout(() => {
-            if (!("Notification" in window) || Notification.permission !== "granted") return;
-            const topic = topics.find((tp) => tp._id === session.topicId);
-            playNotificationSound();
-            new Notification("Study session due now", {
-              body: `Session ${session.sessionNumber} for ${topic?.name ?? "your topic"} is ready`,
-              icon: "/session-notif.svg",
-              tag: dueKey,
-            });
-          }, msUntilDue);
-          timers.push(t);
-        }
-      }
+    const cancelFns: Array<() => void> = [];
+    function scheduleOnce(key: string, pendingSet: Set<string>, firedSet: Set<string> | null, msUntil: number, notify: () => void) {
+      if (pendingSet.has(key) || firedSet?.has(key)) return;
+      if (msUntil <= 0) return;
+      pendingSet.add(key);
+      const t = setTimeout(() => {
+        pendingSet.delete(key);
+        if (firedSet) firedSet.add(key);
+        if (!("Notification" in window) || Notification.permission !== "granted") return;
+        notify();
+      }, msUntil);
+      timers.push(t);
+      cancelFns.push(() => { clearTimeout(t); pendingSet.delete(key); });
     }
-    return () => timers.forEach(clearTimeout);
+
+    for (const session of upcomingSessions) {
+      const topic = topics?.find((tp) => tp._id === session.topicId);
+      const name = topic?.name ?? "your topic";
+
+      scheduleOnce(`warn10-${session._id}`, _pendingWarnings, null, session.scheduledAt - 10 * 60 * 1000 - now, () => {
+        playNotificationSound();
+        new Notification("Study session in 10 minutes", {
+          body: `Session ${session.sessionNumber} for ${name} starts in 10 minutes`,
+          icon: "/session-notif.svg",
+          tag: `warn10-${session._id}`,
+        });
+      });
+
+      scheduleOnce(`warn5-${session._id}`, _pendingWarnings, null, session.scheduledAt - 5 * 60 * 1000 - now, () => {
+        playNotificationSound();
+        new Notification("Study session in 5 minutes", {
+          body: `Session ${session.sessionNumber} for ${name} starts in 5 minutes`,
+          icon: "/session-notif.svg",
+          tag: `warn5-${session._id}`,
+        });
+      });
+
+      scheduleOnce(`due-${session._id}`, _pendingDue, _notifiedDue, session.scheduledAt - now, () => {
+        playNotificationSound();
+        new Notification("Study session due now", {
+          body: `Session ${session.sessionNumber} for ${name} is ready`,
+          icon: "/session-notif.svg",
+          tag: `due-${session._id}`,
+        });
+      });
+    }
+    return () => cancelFns.forEach(fn => fn());
   }, [upcomingSessions, topics]);
 
   return null;

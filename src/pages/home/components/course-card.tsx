@@ -46,18 +46,9 @@ export function CourseCard({ course, index }: CourseCardProps) {
       >
         {/* color band */}
         <div
-          className="h-12 relative flex items-end px-4 pb-1"
+          className="h-12"
           style={{ background: course.color, borderBottom: "2px solid #1C1917" }}
-        >
-          <span
-            className="absolute top-2.5 right-3 text-[10px] font-bold tracking-[1px]"
-            style={{
-              fontFamily: "var(--font-mono)", color: "rgba(255,255,255,0.9)",
-            }}
-          >
-            {course.code}
-          </span>
-        </div>
+        />
 
         <div className="px-4 py-3">
           <h3

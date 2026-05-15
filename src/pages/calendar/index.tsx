@@ -137,7 +137,7 @@ function EventDetailContent({
 
   const canStudy =
     (event.type === "review" && event.courseId && event.topicId && event.startMs <= Date.now()) ||
-    (event.type === "session" && !event.completed && event.topicId);
+    (event.type === "session" && !event.completed && event.topicId && event.startMs <= Date.now());
 
   const studyPath = (() => {
     if (event.type === "review" && event.courseId && event.topicId)
@@ -473,8 +473,9 @@ function MobileCalendar({
               const s = day.getTime();
               const e = s + 24 * 60 * 60 * 1000;
               const dayTopics = topics?.filter(t => t.nextReview && t.nextReview >= s && t.nextReview < e) ?? [];
-              const daySessions = programSessions?.filter(ps => ps.scheduledAt >= s && ps.scheduledAt < e) ?? [];
+              const daySessions = (programSessions?.filter(ps => ps.scheduledAt >= s && ps.scheduledAt < e) ?? []).sort((a, b) => a.scheduledAt - b.scheduledAt);
               const dayGEvents = googleEvents.filter(ev => {
+                if (ev.summary?.startsWith("Engraam:")) return false;
                 const str = ev.start.dateTime ?? ev.start.date;
                 if (!str) return false;
                 return new Date(str).toDateString() === day.toDateString();
@@ -602,8 +603,9 @@ function MobileCalendar({
             const s = selectedDay.getTime();
             const e = s + 24 * 60 * 60 * 1000;
             const dayTopics = topics?.filter(t => t.nextReview && t.nextReview >= s && t.nextReview < e) ?? [];
-            const daySessions = programSessions?.filter(ps => ps.scheduledAt >= s && ps.scheduledAt < e) ?? [];
+            const daySessions = (programSessions?.filter(ps => ps.scheduledAt >= s && ps.scheduledAt < e) ?? []).sort((a, b) => a.scheduledAt - b.scheduledAt);
             const dayGEvents = googleEvents.filter(ev => {
+              if (ev.summary?.startsWith("Engraam:")) return false;
               const str = ev.start.dateTime ?? ev.start.date;
               if (!str) return false;
               return new Date(str).toDateString() === selectedDay.toDateString();
@@ -1033,6 +1035,7 @@ function DesktopCalendar({
                       const startStr = ev.start.dateTime ?? ev.start.date;
                       const endStr = ev.end.dateTime ?? ev.end.date;
                       if (!startStr) return null;
+                      if (ev.summary?.startsWith("Engraam:")) return null;
                       const start = new Date(startStr);
                       const end = endStr ? new Date(endStr) : new Date(start.getTime() + 60 * 60 * 1000);
                       const dayIndex = weekDays.findIndex((wd) => wd.toDateString() === start.toDateString());
@@ -1090,6 +1093,7 @@ function DesktopCalendar({
                 const dayTopics = topics?.filter(t => t.nextReview && t.nextReview >= s && t.nextReview < e) ?? [];
                 const daySessions = programSessions?.filter(ps => ps.scheduledAt >= s && ps.scheduledAt < e) ?? [];
                 const dayGEvents = googleEvents.filter(ev => {
+                  if (ev.summary?.startsWith("Engraam:")) return false;
                   const str = ev.start.dateTime ?? ev.start.date;
                   if (!str) return false;
                   return new Date(str).toDateString() === selectedDay.toDateString();

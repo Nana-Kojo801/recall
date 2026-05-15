@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/../convex/_generated/api";
@@ -15,6 +15,7 @@ import {
   DURATION_OPTIONS,
   formatSessionTime,
 } from "@/lib/spaced-repetition/program";
+import { generationState } from "@/lib/generation-state";
 
 const RATING_BG: Record<string, string> = {
   easy: "#2B7A3E",
@@ -77,7 +78,6 @@ function ProgramSetupModal({
   topicId,
   courseId,
   courseName,
-  courseCode,
   topicName,
   cardCount,
   onStarted,
@@ -87,7 +87,6 @@ function ProgramSetupModal({
   topicId: Id<"topics">;
   courseId: Id<"courses">;
   courseName: string;
-  courseCode: string;
   topicName: string;
   cardCount: number;
   onStarted: (programId: Id<"programs">, firstSessionId: Id<"programSessions">) => void;
@@ -148,7 +147,7 @@ function ProgramSetupModal({
             scheduledAt: schedule[i],
             cardCount,
           })),
-          courseCode,
+          courseName,
           topicName,
         });
         if (!result.connected) setCalWarning(true);
@@ -363,6 +362,16 @@ export function TopicDetailPage() {
   const [deletingUploadId, setDeletingUploadId] = useState<string | null>(null);
   const [freeStudyOpen, setFreeStudyOpen] = useState(false);
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
+  const [genStatus, setGenStatus] = useState(() =>
+    topicId && generationState.topicId === topicId ? generationState.status : "idle"
+  );
+
+  useEffect(() => {
+    if (!topicId) return;
+    return generationState.subscribe(() => {
+      setGenStatus(generationState.topicId === topicId ? generationState.status : "idle");
+    });
+  }, [topicId]);
 
   // Must be before any early return — Rules of Hooks
   const programSessions = useQuery(
@@ -547,10 +556,7 @@ export function TopicDetailPage() {
             </div>
           </div>
 
-          <span className="text-[10px] font-bold tracking-[2px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(255,255,255,0.8)" }}>
-            {course.code}
-          </span>
-          <h1 className="mt-1 font-black" style={{ fontFamily: "var(--font-serif)", fontSize: 28, letterSpacing: -0.5, color: "#fff", lineHeight: 1 }}>
+          <h1 className="font-black" style={{ fontFamily: "var(--font-serif)", fontSize: 28, letterSpacing: -0.5, color: "#fff", lineHeight: 1 }}>
             {topic.name}
           </h1>
 
@@ -572,6 +578,17 @@ export function TopicDetailPage() {
         </header>
 
         <main className="flex-1 px-5 pt-5 pb-10 flex flex-col gap-5">
+          {/* Generation banner */}
+          {genStatus === "generating" && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} style={{ padding: "12px 14px", background: "rgba(232,72,44,0.08)", border: "2px solid #E8482C", borderRadius: 12, display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="flex gap-1.5">
+                {[0,1,2].map(i => <div key={i} className="gen-dot w-1.5 h-1.5 rounded-full" style={{ background: "#E8482C", animationDelay: `${i*0.2}s` }} />)}
+              </div>
+              <span style={{ flex: 1, color: "#E8482C", fontSize: 13, fontWeight: 700, fontFamily: "var(--font-mono)" }}>Generating flashcards…</span>
+              <span style={{ fontSize: 10, color: "#8A8278", fontFamily: "var(--font-mono)" }}>Safe to leave</span>
+            </motion.div>
+          )}
+
           {/* Due Now banner */}
           {dueSession && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} style={{ padding: "12px 14px", background: "#E8482C", border: "2px solid #1C1917", borderRadius: 12, boxShadow: "3px 3px 0 #1C1917", display: "flex", alignItems: "center", gap: 10 }}>
@@ -689,7 +706,7 @@ export function TopicDetailPage() {
               </button>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 2, opacity: 0.85 }}>
-                  {course.code} · {course.name}
+                  {course.name}
                 </div>
                 <div style={{ fontFamily: "var(--font-serif)", fontSize: 44, fontWeight: 900, lineHeight: 0.95, letterSpacing: -1.5, marginTop: 8 }}>
                   {topic.name}
@@ -744,6 +761,17 @@ export function TopicDetailPage() {
           <div style={{ padding: 28, display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 24, alignContent: "start" }}>
             {/* Left: flashcards */}
             <div>
+              {/* Generation banner */}
+              {genStatus === "generating" && (
+                <div style={{ marginBottom: 12, padding: "12px 14px", background: "rgba(232,72,44,0.08)", border: "2px solid #E8482C", borderRadius: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                  <div className="flex gap-1.5">
+                    {[0,1,2].map(i => <div key={i} className="gen-dot w-1.5 h-1.5 rounded-full" style={{ background: "#E8482C", animationDelay: `${i*0.2}s` }} />)}
+                  </div>
+                  <span style={{ flex: 1, color: "#E8482C", fontSize: 13, fontWeight: 700, fontFamily: "var(--font-mono)" }}>Generating flashcards…</span>
+                  <span style={{ fontSize: 10, color: "#8A8278", fontFamily: "var(--font-mono)" }}>Safe to leave</span>
+                </div>
+              )}
+
               {/* Due now banner */}
               {dueSession && (
                 <div style={{ marginBottom: 12, padding: "12px 14px", background: "#E8482C", border: "2px solid #1C1917", borderRadius: 10, boxShadow: "3px 3px 0 #1C1917", display: "flex", alignItems: "center", gap: 10 }}>
@@ -890,7 +918,6 @@ export function TopicDetailPage() {
           topicId={topicId as Id<"topics">}
           courseId={courseId as Id<"courses">}
           courseName={course.name}
-          courseCode={course.code}
           topicName={topic.name}
           cardCount={cardCount}
           onStarted={handleProgramStarted}

@@ -99,7 +99,6 @@ export function CourseDetailPage() {
 
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editName, setEditName] = useState("");
-  const [editCode, setEditCode] = useState("");
   const [editColor, setEditColor] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
@@ -122,7 +121,6 @@ export function CourseDetailPage() {
   const handleOpenEdit = () => {
     if (!course) return;
     setEditName(course.name);
-    setEditCode(course.code);
     setEditColor(course.color);
     setEditSheetOpen(true);
   };
@@ -132,7 +130,7 @@ export function CourseDetailPage() {
     if (!courseId || !editName.trim()) return;
     setEditSaving(true);
     try {
-      await updateCourse({ courseId: courseId as Id<"courses">, name: editName.trim(), code: editCode.trim().toUpperCase(), color: editColor });
+      await updateCourse({ courseId: courseId as Id<"courses">, name: editName.trim(), color: editColor });
       setEditSheetOpen(false);
     } finally {
       setEditSaving(false);
@@ -287,9 +285,6 @@ export function CourseDetailPage() {
                 <BackIcon />
               </button>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 2, opacity: 0.9 }}>
-                  {course.code}
-                </div>
                 <div style={{ fontFamily: "var(--font-serif)", fontSize: 44, fontWeight: 900, lineHeight: 0.95, letterSpacing: -1.5, marginTop: 8 }}>
                   {course.name}
                 </div>

@@ -28,7 +28,6 @@ export const get = query({
 export const create = mutation({
   args: {
     name: v.string(),
-    code: v.string(),
     color: v.string(),
   },
   handler: async (ctx, args) => {
@@ -37,7 +36,6 @@ export const create = mutation({
     return ctx.db.insert("courses", {
       userId,
       name: args.name,
-      code: args.code,
       color: args.color,
     });
   },
@@ -47,7 +45,6 @@ export const update = mutation({
   args: {
     courseId: v.id("courses"),
     name: v.optional(v.string()),
-    code: v.optional(v.string()),
     color: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

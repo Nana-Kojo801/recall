@@ -183,7 +183,7 @@ export const createProgramEvents = action({
         cardCount: v.number(),
       }),
     ),
-    courseCode: v.string(),
+    courseName: v.string(),
     topicName: v.string(),
   },
   handler: async (ctx, args): Promise<{ connected: boolean }> => {
@@ -192,9 +192,8 @@ export const createProgramEvents = action({
     const user = (await ctx.runQuery(api.users.getMe)) as Doc<"users"> | null;
     if (!user?.googleAccessToken) return { connected: false };
 
-    const title = `Engraam: ${args.courseCode} - ${args.topicName}`;
-
     for (const session of args.sessions) {
+      const title = `Engraam: ${args.courseName} · ${args.topicName} – Session ${session.sessionNumber}`;
       try {
         const durationMs = Math.max(10, session.cardCount) * 60 * 1000;
         const freshUser = ((await ctx.runQuery(api.users.getMe)) as Doc<"users"> | null) ?? user;

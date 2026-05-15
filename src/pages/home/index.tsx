@@ -56,7 +56,7 @@ function MobileCourseRow({
   course,
   index,
 }: {
-  course: { _id: string; name: string; code: string; color: string };
+  course: { _id: string; name: string; color: string };
   index: number;
 }) {
   const navigate = useNavigate();
@@ -96,8 +96,6 @@ function MobileCourseRow({
           {course.name}
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 4, alignItems: "center" }}>
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278" }}>{course.code}</span>
-          <span style={{ width: 3, height: 3, borderRadius: 2, background: "#8A8278", flexShrink: 0 }} />
           <span style={{ fontSize: 11, color: "#4A4642" }}>{topicCount} topics</span>
         </div>
       </div>
@@ -117,7 +115,7 @@ function MobileCourseRow({
 function DesktopCourseCard({
   course,
 }: {
-  course: { _id: string; name: string; code: string; color: string };
+  course: { _id: string; name: string; color: string };
 }) {
   const navigate = useNavigate();
   const topics = useQuery(api.topics.listByCourse, { courseId: course._id as never });
@@ -148,28 +146,7 @@ function DesktopCourseCard({
         cursor: "pointer",
       }}
     >
-      <div
-        style={{
-          height: 54,
-          background: course.color,
-          borderBottom: "2px solid #1C1917",
-          position: "relative",
-        }}
-      >
-        <span
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 10,
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            fontWeight: 700,
-            color: "rgba(255,255,255,0.9)",
-          }}
-        >
-          {course.code}
-        </span>
-      </div>
+      <div style={{ height: 54, background: course.color, borderBottom: "2px solid #1C1917" }} />
       <div style={{ padding: 14 }}>
         <div
           style={{
@@ -239,8 +216,8 @@ export function HomePage() {
 
   const topics = useQuery(api.topics.listByUser);
   const courses = useQuery(api.courses.list);
-  const dueProgramSessions = useQuery(api.programSessions.getDueByUser);
-  const upcomingProgramSessions = useQuery(api.programSessions.getUpcomingByUser);
+  const allUpcomingPS = useQuery(api.programSessions.getAllUpcomingByUser);
+  const [tick, setTick] = useState(0);
   const sessions = useQuery(api.studySessions.listByUser);
 
   const [stableCoursesEmpty, setStableCoursesEmpty] = useState(false);
@@ -252,7 +229,22 @@ export function HomePage() {
     setStableCoursesEmpty(false);
   }, [courses]);
 
+  useEffect(() => {
+    if (!allUpcomingPS || allUpcomingPS.length === 0) return;
+    const n = Date.now();
+    const nextFuture = allUpcomingPS
+      .filter(s => s.scheduledAt > n)
+      .sort((a, b) => a.scheduledAt - b.scheduledAt)[0];
+    if (!nextFuture) return;
+    const msUntil = nextFuture.scheduledAt - n;
+    if (msUntil <= 0) return;
+    const t = setTimeout(() => setTick(tk => tk + 1), msUntil + 500);
+    return () => clearTimeout(t);
+  }, [allUpcomingPS, tick]);
+
   const now = Date.now();
+  const dueProgramSessions = allUpcomingPS?.filter(s => s.scheduledAt <= now);
+  const futureProgramSessions = allUpcomingPS?.filter(s => s.scheduledAt > now) ?? [];
   const dueTopics = topics?.filter((t) => t.nextReview && t.nextReview <= now) ?? [];
   const firstDuePS = dueProgramSessions?.[0];
   const firstDuePSTopic = firstDuePS ? topics?.find(t => t._id === firstDuePS.topicId) : null;
@@ -276,12 +268,12 @@ export function HomePage() {
   }, [sessions]);
 
   const upcomingWithTopic = useMemo(() => {
-    if (!upcomingProgramSessions || !topics) return [];
-    return upcomingProgramSessions.map(s => ({
+    if (!futureProgramSessions || !topics) return [];
+    return futureProgramSessions.slice(0, 5).map(s => ({
       ...s,
       topic: topics.find(t => t._id === s.topicId),
     })).filter(s => s.topic);
-  }, [upcomingProgramSessions, topics]);
+  }, [futureProgramSessions, topics]);
 
   const upcomingReviews = useMemo(() => {
     if (!topics) return [];
@@ -404,16 +396,6 @@ export function HomePage() {
                       }}
                     >
                       ▶ {hasInProgressSession ? "Continue session" : "Start studying"}
-                    </button>
-                    <button
-                      onClick={() => navigate("/calendar")}
-                      style={{
-                        padding: "10px 12px", borderRadius: 10,
-                        background: "#fff", color: "#1C1917", border: "2.5px solid #1C1917",
-                        fontFamily: "var(--font-mono)", fontWeight: 600, fontSize: 12, cursor: "pointer",
-                      }}
-                    >
-                      9:30
                     </button>
                   </div>
                 </>
@@ -715,22 +697,6 @@ export function HomePage() {
                       }}
                     >
                       ▶ {hasInProgressSession ? "Continue session" : "Start session"}
-                    </button>
-                    <button
-                      style={{
-                        background: "#fff",
-                        color: "#1C1917",
-                        border: "2px solid #1C1917",
-                        boxShadow: "2px 2px 0 #1C1917",
-                        borderRadius: 10,
-                        padding: "11px 16px",
-                        fontFamily: "var(--font-sans)",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      ⏰ Schedule
                     </button>
                   </div>
                 </>

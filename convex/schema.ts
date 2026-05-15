@@ -21,7 +21,6 @@ export default defineSchema({
   courses: defineTable({
     userId: v.string(),
     name: v.string(),
-    code: v.string(),
     color: v.string(),
   }).index("by_user", ["userId"]),
 

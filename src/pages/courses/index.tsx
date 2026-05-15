@@ -13,7 +13,7 @@ import { CourseForm } from "@/pages/new-course/components/course-form";
 function DesktopCourseCard({
   course,
 }: {
-  course: { _id: string; name: string; code: string; color: string };
+  course: { _id: string; name: string; color: string };
 }) {
   const navigate = useNavigate();
   const topics = useQuery(api.topics.listByCourse, { courseId: course._id as never });
@@ -33,11 +33,7 @@ function DesktopCourseCard({
         overflow: "hidden", cursor: "pointer",
       }}
     >
-      <div style={{ height: 54, background: course.color, borderBottom: "2px solid #1C1917", position: "relative" }}>
-        <span style={{ position: "absolute", top: 8, right: 10, fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>
-          {course.code}
-        </span>
-      </div>
+      <div style={{ height: 54, background: course.color, borderBottom: "2px solid #1C1917", position: "relative" }} />
       <div style={{ padding: 14 }}>
         <div style={{ fontFamily: "var(--font-serif)", fontSize: 15, fontWeight: 700, lineHeight: 1.2, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {course.name}

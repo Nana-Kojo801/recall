@@ -67,12 +67,6 @@ export function CourseHeader({ course, topicCount, cardCount, onEdit, onDelete }
         )}
       </div>
 
-      <span
-        className="text-[10px] font-bold tracking-[2px] uppercase"
-        style={{ fontFamily: "var(--font-mono)", color: "rgba(255,255,255,0.85)" }}
-      >
-        {course.code}
-      </span>
       <h1
         className="mt-1 font-black leading-none"
         style={{ fontFamily: "var(--font-serif)", fontSize: 34, letterSpacing: -1, color: "#fff", lineHeight: 0.95 }}

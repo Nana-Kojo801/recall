@@ -2,6 +2,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { useState } from "react";
+import { generationState } from "@/lib/generation-state";
 import { motion } from "framer-motion";
 import { BottomNav } from "@/components/ui/bottom-nav";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -19,10 +20,12 @@ function SettingsContent({
   signOut,
   user,
   onDeleteAccount,
+  onClearData,
 }: {
   signOut: () => void;
   user: ConvexUser;
   onDeleteAccount: () => void;
+  onClearData: () => void;
 }) {
   const initials = user?.name
     ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -46,6 +49,7 @@ function SettingsContent({
     {
       h: "Account",
       rows: [
+        { l: "Clear all data", danger: true, onPress: onClearData },
         { l: "Delete account", danger: true, onPress: onDeleteAccount },
         { l: "Sign out", danger: true },
       ],
@@ -147,8 +151,11 @@ export function SettingsPage() {
   const user = useQuery(api.users.getMe);
   const { signOut } = useAuthActions();
   const deleteAccountData = useMutation(api.users.deleteAccount);
+  const clearAllDataMut = useMutation(api.users.clearAllData);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   async function handleDeleteAccount() {
     if (!user) return;
@@ -158,6 +165,17 @@ export function SettingsPage() {
       await signOut();
     } catch {
       setDeleting(false);
+    }
+  }
+
+  async function handleClearData() {
+    setClearing(true);
+    try {
+      generationState.cancel();
+      await clearAllDataMut();
+      setClearOpen(false);
+    } finally {
+      setClearing(false);
     }
   }
 
@@ -185,7 +203,7 @@ export function SettingsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
         >
-          <SettingsContent signOut={() => void signOut()} user={user} onDeleteAccount={() => setDeleteOpen(true)} />
+          <SettingsContent signOut={() => void signOut()} user={user} onDeleteAccount={() => setDeleteOpen(true)} onClearData={() => setClearOpen(true)} />
         </motion.main>
         <BottomNav />
       </div>
@@ -208,10 +226,25 @@ export function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-            <SettingsContent signOut={() => void signOut()} user={user} onDeleteAccount={() => setDeleteOpen(true)} />
+            <SettingsContent signOut={() => void signOut()} user={user} onDeleteAccount={() => setDeleteOpen(true)} onClearData={() => setClearOpen(true)} />
           </motion.div>
         </main>
       </div>
+
+      {/* Clear all data confirmation */}
+      <BottomSheet open={clearOpen} onOpenChange={setClearOpen} title="Clear all data?">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p style={{ fontSize: 14, color: "#4A4642", lineHeight: 1.5, margin: 0 }}>
+            This will permanently delete all courses, topics, flashcards, study programs, and uploaded files. Your account will remain active. <strong>This cannot be undone.</strong>
+          </p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Button variant="secondary" className="flex-1" onClick={() => setClearOpen(false)}>Cancel</Button>
+            <Button variant="danger" className="flex-1" disabled={clearing} onClick={handleClearData}>
+              {clearing ? "Clearing…" : "Clear all data"}
+            </Button>
+          </div>
+        </div>
+      </BottomSheet>
 
       {/* Delete account confirmation */}
       <BottomSheet open={deleteOpen} onOpenChange={setDeleteOpen} title="Delete account?">
