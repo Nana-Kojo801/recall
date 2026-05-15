@@ -420,7 +420,6 @@ export function CourseDetailPage() {
       <RightSheet open={editSheetOpen} onOpenChange={setEditSheetOpen} title="Edit Course">
         <form onSubmit={handleSaveEdit} className="flex flex-col gap-4">
           <Input id="edit-name" label="Course name" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus />
-          <Input id="edit-code" label="Course code" value={editCode} onChange={(e) => setEditCode(e.target.value)} />
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-bold tracking-[1.5px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "#8A8278" }}>Color</label>
             <ColorPicker value={editColor} onChange={setEditColor} />
