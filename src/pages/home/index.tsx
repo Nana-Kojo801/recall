@@ -1092,7 +1092,7 @@ export function HomePage() {
       </div>
 
       {/* Single shared notifications sheet — portal renders outside layout so CSS display:none doesn't isolate it */}
-      <RightSheet open={notifOpen} onOpenChange={setNotifOpen} title="Notifications" width="min(380px, 100vw)">
+      <RightSheet open={notifOpen} onOpenChange={setNotifOpen} title="Notifications" width="min(380px, 100vw)" mobileFullWidth>
         <NotificationsSheetContent
           notifications={notifications}
           unreadCount={unreadCount}

@@ -7,14 +7,18 @@ interface RightSheetProps {
   title?: string;
   children: React.ReactNode;
   width?: number | string;
+  mobileFullWidth?: boolean;
 }
 
-export function RightSheet({ open, onOpenChange, title, children, width = 440 }: RightSheetProps) {
+export function RightSheet({ open, onOpenChange, title, children, width = 440, mobileFullWidth = false }: RightSheetProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <AnimatePresence>
         {open && (
           <Dialog.Portal forceMount>
+            {mobileFullWidth && (
+              <style>{`@media (max-width: 767px) { .rsheet-mobile-full { width: 100vw !important; border-left: none !important; } }`}</style>
+            )}
             <Dialog.Overlay asChild>
               <motion.div
                 style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(28,25,23,0.45)" }}
@@ -25,6 +29,7 @@ export function RightSheet({ open, onOpenChange, title, children, width = 440 }:
             </Dialog.Overlay>
             <Dialog.Content asChild>
               <motion.div
+                className={mobileFullWidth ? "rsheet-mobile-full" : undefined}
                 style={{
                   position: "fixed",
                   top: 0, right: 0, bottom: 0,
