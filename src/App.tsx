@@ -16,6 +16,7 @@ import { CoursesPage } from "./pages/courses";
 import { StatsPage } from "./pages/stats";
 import { PrivacyPage } from "./pages/privacy";
 import { TermsPage } from "./pages/terms";
+import { NotFoundPage } from "./pages/not-found";
 
 async function swNotify(title: string, options: NotificationOptions) {
   if ("serviceWorker" in navigator) {
@@ -223,7 +224,7 @@ export function App() {
         <Route path="/courses/:courseId" element={<RequireAuth><CourseDetailPage /></RequireAuth>} />
         <Route path="/courses/:courseId/topics/:topicId" element={<RequireAuth><TopicDetailPage /></RequireAuth>} />
         <Route path="/courses/:courseId/topics/:topicId/study" element={<RequireAuth><StudySessionWrapper /></RequireAuth>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

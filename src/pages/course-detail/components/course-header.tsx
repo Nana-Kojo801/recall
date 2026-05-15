@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 interface CourseHeaderProps {
-  course: { name: string; code: string; color: string };
+  course: { name: string; color: string };
   topicCount: number;
   cardCount: number;
   onEdit?: () => void;
@@ -24,7 +24,7 @@ export function CourseHeader({ course, topicCount, cardCount, onEdit, onDelete }
 
       <div className="flex items-center justify-between mb-5">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/courses")}
           className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 active:translate-x-px active:translate-y-px"
           style={{ background: "rgba(255,255,255,0.25)", border: "1.5px solid rgba(255,255,255,0.6)" }}
         >
