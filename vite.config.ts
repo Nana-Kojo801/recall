@@ -9,10 +9,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "icons/*.png", "engraam-icon-1024.png"],
       manifest: {
-        name: "Engraam — AI Flashcards",
+        name: "Engraam",
         short_name: "Engraam",
         description: "AI-powered flashcards and spaced repetition for university students",
         theme_color: "#F5A623",
@@ -32,15 +35,8 @@ export default defineConfig({
           { src: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: "CacheFirst",
-            options: { cacheName: "google-fonts-cache" },
-          },
-        ],
       },
     }),
   ],

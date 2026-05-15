@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useParams } from "react-router-dom";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { useRef, useEffect } from "react";
 import { playNotificationSound } from "@/lib/notification-sound";
 import { api } from "@/../convex/_generated/api";
@@ -17,6 +17,42 @@ import { StatsPage } from "./pages/stats";
 import { PrivacyPage } from "./pages/privacy";
 import { TermsPage } from "./pages/terms";
 
+async function swNotify(title: string, options: NotificationOptions) {
+  if ("serviceWorker" in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, options);
+      return;
+    } catch { /* fall through */ }
+  }
+  try { new Notification(title, options); } catch { /* no-op */ }
+}
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+async function registerPush(
+  vapidKey: string | null | undefined,
+  subscribe: (args: { endpoint: string; p256dh: string; auth: string }) => Promise<unknown>,
+) {
+  if (!vapidKey || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    const sub = existing ?? await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidKey),
+    });
+    const json = sub.toJSON();
+    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
+    await subscribe({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth });
+  } catch { /* no-op */ }
+}
+
 // Tracks FIRED notifications — prevents duplicates across remounts
 const _notifiedDue = new Set<string>();
 const _notifiedReviews = new Set<string>();
@@ -28,12 +64,20 @@ function SessionNotifier() {
   const dueSessions = useQuery(api.programSessions.getDueByUser);
   const upcomingSessions = useQuery(api.programSessions.getUpcomingByUser);
   const topics = useQuery(api.topics.listByUser);
+  const vapidKey = useQuery(api.push.getVapidPublicKey);
+  const subscribePush = useMutation(api.push.subscribe);
 
   useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then((perm) => {
+        if (perm === "granted") void registerPush(vapidKey, subscribePush);
+      });
+    } else if (Notification.permission === "granted") {
+      void registerPush(vapidKey, subscribePush);
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vapidKey]);
 
   useEffect(() => {
     if (!dueSessions || !topics || !("Notification" in window) || Notification.permission !== "granted") return;
@@ -43,7 +87,7 @@ function SessionNotifier() {
       const topic = topics.find((t) => t._id === session.topicId);
       if (!topic) continue;
       playNotificationSound();
-      new Notification("Study session due now", {
+      void swNotify("Study session due now", {
         body: `Session ${session.sessionNumber} for ${topic.name} is ready`,
         icon: "/session-notif.svg",
         tag: key,
@@ -60,7 +104,7 @@ function SessionNotifier() {
       const key = `review-${topic._id}-${topic.nextReview}`;
       if (_notifiedReviews.has(key)) continue;
       playNotificationSound();
-      new Notification("Review due now", {
+      void swNotify("Review due now", {
         body: `${topic.name} is ready for review`,
         icon: "/review-notif.svg",
         tag: key,
@@ -94,7 +138,7 @@ function SessionNotifier() {
 
       scheduleOnce(`warn10-${session._id}`, _pendingWarnings, null, session.scheduledAt - 10 * 60 * 1000 - now, () => {
         playNotificationSound();
-        new Notification("Study session in 10 minutes", {
+        void swNotify("Study session in 10 minutes", {
           body: `Session ${session.sessionNumber} for ${name} starts in 10 minutes`,
           icon: "/session-notif.svg",
           tag: `warn10-${session._id}`,
@@ -103,7 +147,7 @@ function SessionNotifier() {
 
       scheduleOnce(`warn5-${session._id}`, _pendingWarnings, null, session.scheduledAt - 5 * 60 * 1000 - now, () => {
         playNotificationSound();
-        new Notification("Study session in 5 minutes", {
+        void swNotify("Study session in 5 minutes", {
           body: `Session ${session.sessionNumber} for ${name} starts in 5 minutes`,
           icon: "/session-notif.svg",
           tag: `warn5-${session._id}`,
@@ -112,7 +156,7 @@ function SessionNotifier() {
 
       scheduleOnce(`due-${session._id}`, _pendingDue, _notifiedDue, session.scheduledAt - now, () => {
         playNotificationSound();
-        new Notification("Study session due now", {
+        void swNotify("Study session due now", {
           body: `Session ${session.sessionNumber} for ${name} is ready`,
           icon: "/session-notif.svg",
           tag: `due-${session._id}`,

@@ -18,6 +18,8 @@ import type * as http from "../http.js";
 import type * as migrations from "../migrations.js";
 import type * as programSessions from "../programSessions.js";
 import type * as programs from "../programs.js";
+import type * as push from "../push.js";
+import type * as pushSend from "../pushSend.js";
 import type * as studySessions from "../studySessions.js";
 import type * as topics from "../topics.js";
 import type * as users from "../users.js";
@@ -39,6 +41,8 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   programSessions: typeof programSessions;
   programs: typeof programs;
+  push: typeof push;
+  pushSend: typeof pushSend;
   studySessions: typeof studySessions;
   topics: typeof topics;
   users: typeof users;

@@ -90,6 +90,13 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_topic", ["topicId"]),
 
+  pushSubscriptions: defineTable({
+    userId: v.string(),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+  }).index("by_user", ["userId"]),
+
   materialUploads: defineTable({
     topicId: v.id("topics"),
     userId: v.string(),

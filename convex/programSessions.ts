@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 export const createBatch = mutation({
   args: {
@@ -15,7 +16,12 @@ export const createBatch = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Unauthenticated");
+
+    const topic = await ctx.db.get(args.topicId);
+    const topicName = topic?.name ?? "your topic";
+
     const ids: string[] = [];
+    const now = Date.now();
     for (const s of args.sessions) {
       const id = await ctx.db.insert("programSessions", {
         programId: args.programId,
@@ -27,6 +33,26 @@ export const createBatch = mutation({
         status: "upcoming",
       });
       ids.push(id);
+
+      // Schedule push notifications for future sessions
+      if (s.scheduledAt > now) {
+        const body = `Session ${s.sessionNumber} for ${topicName}`;
+        const warn10At = s.scheduledAt - 10 * 60 * 1000;
+        const warn5At = s.scheduledAt - 5 * 60 * 1000;
+        if (warn10At > now) {
+          await ctx.scheduler.runAt(warn10At, internal.pushSend.send, {
+            userId, title: "Study session in 10 minutes", body, icon: "/session-notif.svg", tag: `warn10-${id}`,
+          });
+        }
+        if (warn5At > now) {
+          await ctx.scheduler.runAt(warn5At, internal.pushSend.send, {
+            userId, title: "Study session in 5 minutes", body, icon: "/session-notif.svg", tag: `warn5-${id}`,
+          });
+        }
+        await ctx.scheduler.runAt(s.scheduledAt, internal.pushSend.send, {
+          userId, title: "Study session due now", body: `${body} is ready`, icon: "/session-notif.svg", tag: `due-${id}`,
+        });
+      }
     }
     return ids;
   },

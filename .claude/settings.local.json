@@ -42,7 +42,12 @@
       "Bash(Remove-Item \"c:\\\\Users\\\\PC\\\\Documents\\\\Coding\\\\Projects\\\\recall\\\\public\\\\icons\\\\icon-512x512-maskable.png\" -Force)",
       "Bash(Write-Output \"deleted\")",
       "Bash(python scripts/round-icons.py)",
-      "Bash(pip install *)"
+      "Bash(pip install *)",
+      "Bash(xargs grep -l \"computeSessionSchedule\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\('dependencies',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); const keys=Object.keys\\({...p.dependencies,...p.devDependencies}\\); console.log\\(keys.filter\\(k=>k.includes\\('workbox'\\)\\)\\)\")",
+      "Bash(findstr workbox *)",
+      "Bash(node -e \"const webpush = require\\('web-push'\\); const keys = webpush.generateVAPIDKeys\\(\\); console.log\\('VAPID_PUBLIC_KEY=' + keys.publicKey\\); console.log\\('VAPID_PRIVATE_KEY=' + keys.privateKey\\);\")"
     ]
   }
 }
