@@ -148,7 +148,7 @@ export function TermsPage() {
             You are responsible for maintaining the security of your Google account. Any activity that occurs
             under your Engraam account is your responsibility. If you believe your account has been
             compromised, contact us immediately at{" "}
-            <a href="mailto:support@engraam.app" style={{ color: T.accent }}>support@engraam.app</a>.
+            <a href="mailto:nkabenyah@gmail.com" style={{ color: T.accent }}>nkabenyah@gmail.com</a>.
           </P>
         </Section>
 
@@ -288,7 +288,7 @@ export function TermsPage() {
             If you have any questions about these Terms or the Service, please contact us at:
           </P>
           <P>
-            <a href="mailto:support@engraam.app" style={{ color: T.accent, fontWeight: 700 }}>support@engraam.app</a>
+            <a href="mailto:nkabenyah@gmail.com" style={{ color: T.accent, fontWeight: 700 }}>nkabenyah@gmail.com</a>
           </P>
         </Section>
 

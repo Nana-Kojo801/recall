@@ -246,7 +246,7 @@ export function PrivacyPage() {
           <P>
             To request deletion of your data, use the "Delete account" option in the Engraam Settings page,
             or contact us at{" "}
-            <a href="mailto:privacy@engraam.app" style={{ color: T.accent }}>privacy@engraam.app</a>.
+            <a href="mailto:nkabenyah@gmail.com" style={{ color: T.accent }}>nkabenyah@gmail.com</a>.
             We will process deletion requests within 30 days.
           </P>
         </Section>
@@ -261,7 +261,7 @@ export function PrivacyPage() {
           <P>
             No system can guarantee absolute security. If you believe your account has been compromised,
             please contact us immediately at{" "}
-            <a href="mailto:privacy@engraam.app" style={{ color: T.accent }}>privacy@engraam.app</a>.
+            <a href="mailto:nkabenyah@gmail.com" style={{ color: T.accent }}>nkabenyah@gmail.com</a>.
           </P>
         </Section>
 
@@ -270,7 +270,7 @@ export function PrivacyPage() {
             Engraam is intended for university students aged 18 and above. We do not knowingly collect
             personal information from anyone under the age of 18. If you believe a minor has created an
             account, please contact us at{" "}
-            <a href="mailto:privacy@engraam.app" style={{ color: T.accent }}>privacy@engraam.app</a>{" "}
+            <a href="mailto:nkabenyah@gmail.com" style={{ color: T.accent }}>nkabenyah@gmail.com</a>{" "}
             and we will promptly delete the account and associated data.
           </P>
         </Section>
@@ -290,7 +290,7 @@ export function PrivacyPage() {
             your data, please contact us at:
           </P>
           <P>
-            <a href="mailto:privacy@engraam.app" style={{ color: T.accent, fontWeight: 700 }}>privacy@engraam.app</a>
+            <a href="mailto:nkabenyah@gmail.com" style={{ color: T.accent, fontWeight: 700 }}>nkabenyah@gmail.com</a>
           </P>
         </Section>
 

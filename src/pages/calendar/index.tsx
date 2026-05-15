@@ -85,6 +85,7 @@ type GCalEvent = {
 type ProgramSession = {
   _id: string;
   topicId: string;
+  programId: string;
   sessionNumber: number;
   scheduledAt: number;
   cardCount: number;
@@ -103,6 +104,8 @@ type SelectedEvent = {
   sessionNumber?: number;
   cardCount?: number;
   sessionStatus?: string;
+  sessionId?: string;
+  programId?: string;
 };
 
 // ── Event detail content ─────────────────────────────────────────────────────
@@ -141,7 +144,13 @@ function EventDetailContent({
       return `/courses/${event.courseId}/topics/${event.topicId}/study`;
     if (event.type === "session" && event.topicId) {
       const courseId = topics?.find(t => t._id === event.topicId)?.courseId;
-      if (courseId) return `/courses/${courseId}/topics/${event.topicId}/study`;
+      if (courseId) {
+        const base = `/courses/${courseId}/topics/${event.topicId}/study`;
+        const params = new URLSearchParams();
+        if (event.programId) params.set("programId", event.programId);
+        if (event.sessionId) params.set("sessionId", event.sessionId);
+        return params.toString() ? `${base}?${params.toString()}` : base;
+      }
     }
     return null;
   })();
@@ -527,6 +536,8 @@ function MobileCalendar({
                               sessionNumber: ps.sessionNumber,
                               cardCount: ps.cardCount,
                               sessionStatus: ps.status,
+                              sessionId: ps._id,
+                              programId: ps.programId,
                             })}
                             style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", background: "transparent", border: "none", borderTop: `1px solid rgba(28,25,23,0.06)`, cursor: "pointer", textAlign: "left", width: "100%" }}
                           >
@@ -603,6 +614,7 @@ function MobileCalendar({
               startMs: number; endMs: number; completed?: boolean;
               topicId?: string; courseId?: string;
               sessionNumber?: number; cardCount?: number; sessionStatus?: string;
+              sessionId?: string; programId?: string;
             }[] = [
               ...dayTopics.map(t => ({
                 hour: new Date(t.nextReview!).getHours(),
@@ -623,6 +635,7 @@ function MobileCalendar({
                 completed: ps.status === "completed",
                 topicId: ps.topicId,
                 sessionNumber: ps.sessionNumber, cardCount: ps.cardCount, sessionStatus: ps.status,
+                sessionId: ps._id, programId: ps.programId,
               })),
               ...dayGEvents.map(ev => {
                 const startStr = ev.start.dateTime ?? ev.start.date;
@@ -1004,6 +1017,8 @@ function DesktopCalendar({
                             sessionNumber: e.session.sessionNumber,
                             cardCount: e.session.cardCount,
                             sessionStatus: e.session.status,
+                            sessionId: e.session._id,
+                            programId: e.session.programId,
                           })}
                           style={{ position: "absolute", top: topPx, height: heightPx, left: `calc(52px + ${e.dayIndex} * ((100% - 52px) / 7) + 3px)`, width: "calc((100% - 52px) / 7 - 6px)", background: isCompleted ? "rgba(28,25,23,0.05)" : "rgba(43,122,62,0.12)", color, border: `1.5px solid ${color}`, borderLeft: `4px solid ${color}`, borderRadius: 4, padding: "3px 6px", fontSize: 11, fontWeight: 700, lineHeight: 1.2, overflow: "hidden", zIndex: 5, opacity: isCompleted ? 0.75 : 1, cursor: "pointer" }}
                         >
@@ -1014,11 +1029,7 @@ function DesktopCalendar({
                       );
                     })}
 
-                    {eventsLoading && [0, 1, 2].map((i) => (
-                      <div key={`skel${i}`} className="animate-pulse" style={{ position: "absolute", top: (i * 2 + 1) * ROW_HEIGHT + 4, height: ROW_HEIGHT - 8, left: `calc(52px + ${(i + 1) % 7} * ((100% - 52px) / 7) + 3px)`, width: "calc((100% - 52px) / 7 - 6px)", background: "rgba(59,91,219,0.12)", border: "1.5px solid rgba(59,91,219,0.2)", borderRadius: 4, zIndex: 3 }} />
-                    ))}
-
-                    {!eventsLoading && googleEvents.map((ev) => {
+                    {googleEvents.map((ev) => {
                       const startStr = ev.start.dateTime ?? ev.start.date;
                       const endStr = ev.end.dateTime ?? ev.end.date;
                       if (!startStr) return null;
@@ -1147,6 +1158,8 @@ function DesktopCalendar({
                             sessionNumber: ps.sessionNumber,
                             cardCount: ps.cardCount,
                             sessionStatus: ps.status,
+                            sessionId: ps._id,
+                            programId: ps.programId,
                           })}
                           style={{ position: "absolute", top: topPx, height: Math.max(durHr * ROW_HEIGHT - 2, 22), left: "calc(52px + 3px)", width: "calc(100% - 52px - 6px)", background: isCompleted ? "rgba(28,25,23,0.05)" : "rgba(43,122,62,0.12)", color, border: `1.5px solid ${color}`, borderLeft: `4px solid ${color}`, borderRadius: 4, padding: "3px 8px", overflow: "hidden", zIndex: 5, opacity: isCompleted ? 0.75 : 1, cursor: "pointer" }}
                         >

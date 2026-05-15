@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useParams } from "react-router-dom";
 import { useConvexAuth, useQuery } from "convex/react";
 import { useRef, useEffect } from "react";
+import { playNotificationSound } from "@/lib/notification-sound";
 import { api } from "@/../convex/_generated/api";
 import { AuthPage } from "./pages/auth";
 import { HomePage } from "./pages/home";
@@ -19,6 +20,7 @@ import { TermsPage } from "./pages/terms";
 // Module-level sets survive route changes (component remounts)
 const _notifiedDue = new Set<string>();
 const _scheduledWarnings = new Set<string>();
+const _scheduledDue = new Set<string>();
 const _notifiedReviews = new Set<string>();
 
 function SessionNotifier() {
@@ -39,6 +41,7 @@ function SessionNotifier() {
       if (_notifiedDue.has(key)) continue;
       const topic = topics.find((t) => t._id === session.topicId);
       if (!topic) continue;
+      playNotificationSound();
       new Notification("Study session due now", {
         body: `Session ${session.sessionNumber} for ${topic.name} is ready`,
         icon: "/session-notif.svg",
@@ -55,6 +58,7 @@ function SessionNotifier() {
       if (!topic.nextReview || topic.nextReview > now) continue;
       const key = `review-${topic._id}-${topic.nextReview}`;
       if (_notifiedReviews.has(key)) continue;
+      playNotificationSound();
       new Notification("Review due now", {
         body: `${topic.name} is ready for review`,
         icon: "/review-notif.svg",
@@ -70,20 +74,41 @@ function SessionNotifier() {
     const timers: ReturnType<typeof setTimeout>[] = [];
     for (const session of upcomingSessions) {
       const warningKey = `warn-${session._id}`;
-      if (_scheduledWarnings.has(warningKey)) continue;
-      const msUntilWarning = session.scheduledAt - 10 * 60 * 1000 - now;
-      if (msUntilWarning <= 0) continue;
-      _scheduledWarnings.add(warningKey);
-      const t = setTimeout(() => {
-        if (!("Notification" in window) || Notification.permission !== "granted") return;
-        const topic = topics.find((tp) => tp._id === session.topicId);
-        new Notification("Study session starting soon", {
-          body: `Session ${session.sessionNumber} for ${topic?.name ?? "your topic"} starts in 10 minutes`,
-          icon: "/session-notif.svg",
-          tag: warningKey,
-        });
-      }, msUntilWarning);
-      timers.push(t);
+      if (!_scheduledWarnings.has(warningKey)) {
+        const msUntilWarning = session.scheduledAt - 10 * 60 * 1000 - now;
+        if (msUntilWarning > 0) {
+          _scheduledWarnings.add(warningKey);
+          const t = setTimeout(() => {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+            const topic = topics.find((tp) => tp._id === session.topicId);
+            playNotificationSound();
+            new Notification("Study session starting soon", {
+              body: `Session ${session.sessionNumber} for ${topic?.name ?? "your topic"} starts in 10 minutes`,
+              icon: "/session-notif.svg",
+              tag: warningKey,
+            });
+          }, msUntilWarning);
+          timers.push(t);
+        }
+      }
+      const dueKey = `due-sched-${session._id}`;
+      if (!_scheduledDue.has(dueKey)) {
+        const msUntilDue = session.scheduledAt - now;
+        if (msUntilDue > 0) {
+          _scheduledDue.add(dueKey);
+          const t = setTimeout(() => {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+            const topic = topics.find((tp) => tp._id === session.topicId);
+            playNotificationSound();
+            new Notification("Study session due now", {
+              body: `Session ${session.sessionNumber} for ${topic?.name ?? "your topic"} is ready`,
+              icon: "/session-notif.svg",
+              tag: dueKey,
+            });
+          }, msUntilDue);
+          timers.push(t);
+        }
+      }
     }
     return () => timers.forEach(clearTimeout);
   }, [upcomingSessions, topics]);

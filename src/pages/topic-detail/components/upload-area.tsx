@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useMutation, useAction } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { motion } from "framer-motion";
 import { extractTextFromFile } from "@/lib/openrouter/client";
 import { Button } from "@/components/ui/button";
+import { generationState } from "@/lib/generation-state";
 
 interface UploadAreaProps {
   topicId: Id<"topics">;
@@ -13,11 +14,26 @@ interface UploadAreaProps {
 
 type UploadStatus = "idle" | "reading" | "uploading" | "ready" | "generating" | "done" | "error";
 
+function initStatus(topicId: string): UploadStatus {
+  if (generationState.topicId === topicId) {
+    if (generationState.status === "generating") return "generating";
+    if (generationState.status === "done") return "done";
+    if (generationState.status === "error") return "error";
+  }
+  return "idle";
+}
+
 export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState<UploadStatus>("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [cardCount, setCardCount] = useState(0);
+  const [status, setStatus] = useState<UploadStatus>(() => initStatus(topicId));
+  const [errorMsg, setErrorMsg] = useState(() =>
+    generationState.topicId === topicId && generationState.status === "error"
+      ? generationState.errorMsg : ""
+  );
+  const [cardCount, setCardCount] = useState(() =>
+    generationState.topicId === topicId && generationState.status === "done"
+      ? generationState.cardCount : 0
+  );
   const [dragging, setDragging] = useState(false);
   const [focusHint, setFocusHint] = useState("");
   const [maxCards, setMaxCards] = useState<number>(0);
@@ -29,6 +45,22 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const createUploadRecord = useMutation(api.files.createUploadRecord);
   const generateFlashcards = useAction(api.ai.generateFlashcards);
+
+  // Sync from global generation state when this topic's generation resolves
+  useEffect(() => {
+    return generationState.subscribe(() => {
+      if (generationState.topicId !== topicId) return;
+      if (generationState.status === "done") {
+        setStatus("done");
+        setCardCount(generationState.cardCount);
+      } else if (generationState.status === "error") {
+        setStatus("error");
+        setErrorMsg(generationState.errorMsg);
+      } else if (generationState.status === "idle") {
+        setStatus("idle");
+      }
+    });
+  }, [topicId]);
 
   const uploadFile = async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
@@ -61,29 +93,31 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
     }
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
     if (!pendingUploadId.current) return;
     setStatus("generating");
-    try {
-      const fronts = await generateFlashcards({
-        topicId,
-        uploadId: pendingUploadId.current,
-        text: pendingText.current,
-        focusHint: focusHint.trim() || undefined,
-        maxCards: maxCards > 0 ? maxCards : undefined,
-      });
-      setCardCount(fronts.length);
-      setStatus("done");
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("Flashcards ready!", {
-          body: `${fronts.length} flashcards generated`,
-          icon: "/icons/icon-192x192.png",
-        });
-      }
-    } catch (err) {
-      setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "Generation failed");
-    }
+    const tid = topicId as string;
+    generationState.start(tid);
+
+    const p = generateFlashcards({
+      topicId,
+      uploadId: pendingUploadId.current,
+      text: pendingText.current,
+      focusHint: focusHint.trim() || undefined,
+      maxCards: maxCards > 0 ? maxCards : undefined,
+    }).then((fronts) => {
+      generationState.done(fronts.length, tid);
+    }).catch((err: unknown) => {
+      generationState.fail(err instanceof Error ? err.message : "Generation failed", tid);
+    }) as Promise<void>;
+
+    generationState.keepAlive(p);
+  };
+
+  const handleCancel = () => {
+    generationState.cancel();
+    setStatus("idle");
+    reset();
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -94,10 +128,13 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
   };
 
   const reset = () => {
+    generationState.reset();
     setStatus("idle");
     setFocusHint("");
     setMaxCards(0);
     setFileName("");
+    setErrorMsg("");
+    setCardCount(0);
     pendingUploadId.current = null;
     pendingText.current = "";
     if (inputRef.current) inputRef.current.value = "";
@@ -239,7 +276,13 @@ export function UploadArea({ topicId, onCancel }: UploadAreaProps) {
             ))}
           </div>
           <p className="text-sm font-bold text-center" style={{ fontFamily: "var(--font-mono)", color: "#4A4642" }}>Brewing flashcards with AI…</p>
-          <p style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#E8482C", textAlign: "center" }}>⚠ Do not leave this page</p>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600, color: "#8A8278", textAlign: "center" }}>Safe to navigate away — we'll notify when done</p>
+          <button
+            onClick={handleCancel}
+            style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#E8482C", background: "transparent", border: "1.5px solid #E8482C", borderRadius: 6, padding: "4px 12px", cursor: "pointer", marginTop: 2 }}
+          >
+            Cancel
+          </button>
         </div>
       )}
 
