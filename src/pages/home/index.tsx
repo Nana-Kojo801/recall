@@ -405,7 +405,7 @@ export function HomePage() {
     if (!topics) return [];
     const n = Date.now();
     return topics
-      .filter(t => t.nextReview && t.nextReview > n && t.nextReview <= n + 7 * 24 * 3600 * 1000)
+      .filter(t => t.nextReview && t.nextReview > n)
       .sort((a, b) => a.nextReview! - b.nextReview!);
   }, [topics]);
 

@@ -396,7 +396,7 @@ function MobileCalendar({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22 }}
-            style={{ position: "relative", padding: "18px 20px 0" }}
+            style={{ position: "relative", padding: "18px 20px 12px" }}
           >
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
               <div style={{ fontFamily: "var(--font-serif)", fontSize: 17, fontWeight: 700, color: "#1C1917" }}>Upcoming reviews</div>
@@ -446,27 +446,29 @@ function MobileCalendar({
       })()}
 
       {/* Nav controls */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px 0" }}>
+      <div style={{ position: "relative", padding: "14px 20px 0", display: "flex", flexDirection: "column", gap: 10 }}>
+        {/* Toggle — full width */}
         <div style={{ display: "flex", background: "#fff", border: "2px solid #1C1917", borderRadius: 8, overflow: "hidden" }}>
           {(["week", "day"] as const).map(m => (
-            <button key={m} onClick={() => setViewMode(m)} style={{ padding: "10px 18px", fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, cursor: "pointer", border: "none", background: viewMode === m ? "#1C1917" : "#fff", color: viewMode === m ? "#fff" : "#8A8278", letterSpacing: 0.5 }}>
+            <button key={m} onClick={() => setViewMode(m)} style={{ flex: 1, padding: "10px 0", fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, cursor: "pointer", border: "none", background: viewMode === m ? "#1C1917" : "#fff", color: viewMode === m ? "#fff" : "#8A8278", letterSpacing: 0.5 }}>
               {m.toUpperCase()}
             </button>
           ))}
         </div>
+        {/* Prev / label / next — full width */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={() => viewMode === "week" ? setWeekOffset((o) => o - 1) : setDayOffset((o) => o - 1)}
-            style={{ width: 36, height: 36, borderRadius: 8, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
+            style={{ width: 40, height: 40, borderRadius: 8, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#8A8278", letterSpacing: 0.5, textAlign: "center", minWidth: viewMode === "week" ? 120 : 90 }}>
+          <div style={{ flex: 1, fontFamily: "var(--font-mono)", fontSize: 11, color: "#8A8278", letterSpacing: 0.5, textAlign: "center" }}>
             {viewMode === "week" ? weekLabel : dayLabel}
           </div>
           <button
             onClick={() => viewMode === "week" ? setWeekOffset((o) => o + 1) : setDayOffset((o) => o + 1)}
-            style={{ width: 36, height: 36, borderRadius: 8, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
+            style={{ width: 40, height: 40, borderRadius: 8, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
           </button>
@@ -541,7 +543,7 @@ function MobileCalendar({
                       {daySessions.map((ps, si) => {
                         const isCompleted = ps.status === "completed";
                         const sessionTopic = topics?.find(t => t._id === ps.topicId);
-                        const sessionLabel = sessionTopic ? `${sessionTopic.name} · S${ps.sessionNumber}` : `Session ${ps.sessionNumber}`;
+                        const sessionLabel = sessionTopic ? `${sessionTopic.name} · Session ${ps.sessionNumber}` : `Session ${ps.sessionNumber}`;
                         return (
                           <button
                             key={ps._id}
@@ -648,7 +650,7 @@ function MobileCalendar({
               })),
               ...daySessions.map(ps => {
                 const psTopic = topics?.find(t => t._id === ps.topicId);
-                const psLabel = psTopic ? `${psTopic.name} · S${ps.sessionNumber}` : `Session ${ps.sessionNumber}`;
+                const psLabel = psTopic ? `${psTopic.name} · Session ${ps.sessionNumber}` : `Session ${ps.sessionNumber}`;
                 return {
                   hour: new Date(ps.scheduledAt).getHours(),
                   minute: new Date(ps.scheduledAt).getMinutes(),
@@ -809,16 +811,16 @@ function DesktopCalendar({
   }, [programSessions, monday, sunday, weekDays]);
 
   const upcoming = useMemo(() => {
+    const days = viewMode === "week" ? weekDays : [selectedDay];
     const result: { date: Date; topicList: Topic[] }[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    for (const d of days) {
       const s = d.getTime();
       const e = s + 24 * 60 * 60 * 1000;
       const due = topics?.filter((t) => t.nextReview && t.nextReview >= s && t.nextReview < e) ?? [];
       if (due.length > 0) result.push({ date: d, topicList: due });
     }
     return result;
-  }, [topics, today]);
+  }, [topics, viewMode, weekDays, selectedDay]);
 
   const ROW_HEIGHT = 60;
   const gridScrollRef = useRef<HTMLDivElement>(null);
@@ -868,10 +870,10 @@ function DesktopCalendar({
       )}
 
       {/* Upcoming reviews — 3-col grid */}
-      <div style={{ padding: "18px 28px 0" }}>
+      <div style={{ padding: "18px 28px 12px" }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
           <div style={{ fontFamily: "var(--font-serif)", fontSize: 22, fontWeight: 800, letterSpacing: -0.5, color: "#1C1917" }}>Upcoming reviews</div>
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#8A8278", letterSpacing: 1 }}>NEXT 7 DAYS</div>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#8A8278", letterSpacing: 1 }}>{viewMode === "week" ? "THIS WEEK" : "TODAY"}</div>
         </div>
         {upcoming.length === 0 ? (
           <div style={{ padding: "20px 0", textAlign: "center" }}>
