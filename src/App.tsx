@@ -19,14 +19,15 @@ import { TermsPage } from "./pages/terms";
 import { NotFoundPage } from "./pages/not-found";
 
 async function swNotify(title: string, options: NotificationOptions) {
+  const opts = { badge: "/badge-mono.svg", ...options };
   if ("serviceWorker" in navigator) {
     try {
       const reg = await navigator.serviceWorker.ready;
-      await reg.showNotification(title, options);
+      await reg.showNotification(title, opts);
       return;
     } catch { /* fall through */ }
   }
-  try { new Notification(title, options); } catch { /* no-op */ }
+  try { new Notification(title, opts); } catch { /* no-op */ }
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -67,6 +68,7 @@ function SessionNotifier() {
   const topics = useQuery(api.topics.listByUser);
   const vapidKey = useQuery(api.push.getVapidPublicKey);
   const subscribePush = useMutation(api.push.subscribe);
+  const createNotification = useMutation(api.notifications.createFromClient);
 
   // Listen for SW "PLAY_NOTIFICATION_SOUND" messages (mobile push path)
   useEffect(() => {
@@ -99,15 +101,14 @@ function SessionNotifier() {
       if (_notifiedDue.has(key)) continue;
       const topic = topics.find((t) => t._id === session.topicId);
       if (!topic) continue;
+      const title = "Study session due now";
+      const body = `Session ${session.sessionNumber} for ${topic.name} is ready`;
       playNotificationSound();
-      void swNotify("Study session due now", {
-        body: `Session ${session.sessionNumber} for ${topic.name} is ready`,
-        icon: "/session-notif.svg",
-        tag: key,
-      });
+      void swNotify(title, { body, icon: "/session-notif.svg", tag: key });
+      void createNotification({ title, body, type: "session_due" });
       _notifiedDue.add(key);
     }
-  }, [dueSessions, topics]);
+  }, [dueSessions, topics, createNotification]);
 
   useEffect(() => {
     if (!topics || !("Notification" in window) || Notification.permission !== "granted") return;
@@ -116,15 +117,14 @@ function SessionNotifier() {
       if (!topic.nextReview || topic.nextReview > now) continue;
       const key = `review-${topic._id}-${topic.nextReview}`;
       if (_notifiedReviews.has(key)) continue;
+      const title = "Review due now";
+      const body = `${topic.name} is ready for review`;
       playNotificationSound();
-      void swNotify("Review due now", {
-        body: `${topic.name} is ready for review`,
-        icon: "/review-notif.svg",
-        tag: key,
-      });
+      void swNotify(title, { body, icon: "/review-notif.svg", tag: key });
+      void createNotification({ title, body, type: "review_due" });
       _notifiedReviews.add(key);
     }
-  }, [topics]);
+  }, [topics, createNotification]);
 
   useEffect(() => {
     if (!upcomingSessions || !topics) return;
@@ -150,34 +150,31 @@ function SessionNotifier() {
       const name = topic?.name ?? "your topic";
 
       scheduleOnce(`warn10-${session._id}`, _pendingWarnings, null, session.scheduledAt - 10 * 60 * 1000 - now, () => {
+        const title = "Study session in 10 minutes";
+        const body = `Session ${session.sessionNumber} for ${name} starts in 10 minutes`;
         playNotificationSound();
-        void swNotify("Study session in 10 minutes", {
-          body: `Session ${session.sessionNumber} for ${name} starts in 10 minutes`,
-          icon: "/session-notif.svg",
-          tag: `warn10-${session._id}`,
-        });
+        void swNotify(title, { body, icon: "/session-notif.svg", tag: `warn10-${session._id}` });
+        void createNotification({ title, body, type: "session_warning" });
       });
 
       scheduleOnce(`warn5-${session._id}`, _pendingWarnings, null, session.scheduledAt - 5 * 60 * 1000 - now, () => {
+        const title = "Study session in 5 minutes";
+        const body = `Session ${session.sessionNumber} for ${name} starts in 5 minutes`;
         playNotificationSound();
-        void swNotify("Study session in 5 minutes", {
-          body: `Session ${session.sessionNumber} for ${name} starts in 5 minutes`,
-          icon: "/session-notif.svg",
-          tag: `warn5-${session._id}`,
-        });
+        void swNotify(title, { body, icon: "/session-notif.svg", tag: `warn5-${session._id}` });
+        void createNotification({ title, body, type: "session_warning" });
       });
 
       scheduleOnce(`due-${session._id}`, _pendingDue, _notifiedDue, session.scheduledAt - now, () => {
+        const title = "Study session due now";
+        const body = `Session ${session.sessionNumber} for ${name} is ready`;
         playNotificationSound();
-        void swNotify("Study session due now", {
-          body: `Session ${session.sessionNumber} for ${name} is ready`,
-          icon: "/session-notif.svg",
-          tag: `due-${session._id}`,
-        });
+        void swNotify(title, { body, icon: "/session-notif.svg", tag: `due-${session._id}` });
+        void createNotification({ title, body, type: "session_due" });
       });
     }
     return () => cancelFns.forEach(fn => fn());
-  }, [upcomingSessions, topics]);
+  }, [upcomingSessions, topics, createNotification]);
 
   return null;
 }

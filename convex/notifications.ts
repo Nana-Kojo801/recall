@@ -23,6 +23,28 @@ export const create = internalMutation({
   },
 });
 
+export const createFromClient = mutation({
+  args: {
+    title: v.string(),
+    body: v.string(),
+    type: v.union(v.literal("session_due"), v.literal("session_warning"), v.literal("review_due"), v.literal("general")),
+    link: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return;
+    await ctx.db.insert("notifications", {
+      userId,
+      title: args.title,
+      body: args.body,
+      type: args.type,
+      isRead: false,
+      createdAt: Date.now(),
+      link: args.link,
+    });
+  },
+});
+
 export const listByUser = query({
   args: {},
   handler: async (ctx) => {

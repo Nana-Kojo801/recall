@@ -395,10 +395,11 @@ export function HomePage() {
 
   const upcomingWithTopic = useMemo(() => {
     if (!futureProgramSessions || !topics) return [];
-    return futureProgramSessions.slice(0, 5).map(s => ({
-      ...s,
-      topic: topics.find(t => t._id === s.topicId),
-    })).filter(s => s.topic);
+    return [...futureProgramSessions]
+      .sort((a, b) => a.scheduledAt - b.scheduledAt)
+      .slice(0, 5)
+      .map(s => ({ ...s, topic: topics.find(t => t._id === s.topicId) }))
+      .filter(s => s.topic);
   }, [futureProgramSessions, topics]);
 
   const upcomingReviews = useMemo(() => {
