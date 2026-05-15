@@ -378,80 +378,97 @@ function MobileCalendar({
         </div>
       )}
 
-      {/* Upcoming reviews summary — week view */}
-      {viewMode === "week" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22 }}
-          style={{ position: "relative", padding: "18px 20px 0" }}
-        >
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-            <div style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 700, color: "#1C1917" }}>Upcoming reviews</div>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", letterSpacing: 1 }}>{weekOffset === 0 ? "THIS WEEK" : "SELECTED WEEK"}</div>
-          </div>
-          {upcoming.length === 0 ? (
-            <div style={{ padding: "28px 0", textAlign: "center" }}>
-              <p style={{ fontFamily: "var(--font-accent)", fontSize: 20, color: "#2B7A3E" }}>All caught up! ✦</p>
-              <p style={{ fontSize: 13, color: "#8A8278", marginTop: 4 }}>No reviews due this week.</p>
+      {/* Upcoming reviews summary — week view and day view */}
+      {(() => {
+        const reviewsToShow = viewMode === "week"
+          ? upcoming.flatMap(({ topicList }) => topicList)
+          : (topics?.filter(t => {
+              if (!t.nextReview) return false;
+              const s = selectedDay.getTime();
+              return t.nextReview >= s && t.nextReview < s + 24 * 60 * 60 * 1000;
+            }) ?? []);
+        const sectionLabel = viewMode === "week"
+          ? (weekOffset === 0 ? "THIS WEEK" : "SELECTED WEEK")
+          : "TODAY";
+        return (
+          <motion.div
+            key={viewMode}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22 }}
+            style={{ position: "relative", padding: "18px 20px 0" }}
+          >
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
+              <div style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 700, color: "#1C1917" }}>Upcoming reviews</div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", letterSpacing: 1 }}>{sectionLabel}</div>
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {upcoming.map(({ date, topicList }, i) => {
-                const isToday = date.toDateString() === today.toDateString();
-                return (
-                  <div
-                    key={date.toISOString()}
-                    onClick={() => {
-                      const dayIdx = weekDays.findIndex(d => d.toDateString() === date.toDateString());
-                      setDayOffset(dayIdx - (weekDays.findIndex(d => d.toDateString() === today.toDateString())) + dayOffset);
-                      setViewMode("day");
-                    }}
-                    style={{ display: "flex", alignItems: "center", gap: 12, padding: 10, background: "#fff", border: "2px solid #1C1917", borderRadius: 12, boxShadow: "3px 3px 0 #1C1917", cursor: "pointer" }}
-                  >
-                    <div style={{ width: 42, height: 44, borderRadius: 8, background: ACCENT_COLORS[i % ACCENT_COLORS.length], border: "1.5px solid #1C1917", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }}>
-                      <div style={{ fontSize: 9, fontFamily: "var(--font-mono)" }}>{date.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}</div>
-                      <div style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 800, lineHeight: 1 }}>{date.getDate()}</div>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: isToday ? "#E8482C" : "#8A8278", fontWeight: 700 }}>{isToday ? "TODAY" : date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}</div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: "#1C1917", marginTop: 2 }}>{topicList.length} {topicList.length === 1 ? "topic" : "topics"} · ~{Math.ceil(topicList.length * 2)} min</div>
-                    </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </motion.div>
-      )}
+            {reviewsToShow.length === 0 ? (
+              <div style={{ padding: "28px 0", textAlign: "center" }}>
+                <p style={{ fontFamily: "var(--font-accent)", fontSize: 20, color: "#2B7A3E" }}>All caught up! ✦</p>
+                <p style={{ fontSize: 13, color: "#8A8278", marginTop: 4 }}>No reviews due {viewMode === "week" ? "this week" : "today"}.</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {reviewsToShow.map((t) => {
+                  const reviewDate = t.nextReview ? new Date(t.nextReview) : null;
+                  const isToday = reviewDate?.toDateString() === today.toDateString();
+                  return (
+                    <button
+                      key={t._id}
+                      onClick={() => openEvent({
+                        type: "review",
+                        label: t.name,
+                        startMs: t.nextReview!,
+                        endMs: t.nextReview! + 0.75 * 3600000,
+                        color: "#E8482C",
+                        topicId: t._id,
+                        courseId: t.courseId,
+                      })}
+                      style={{ display: "flex", alignItems: "center", gap: 12, padding: 10, background: "#fff", border: "2px solid #1C1917", borderRadius: 12, boxShadow: "3px 3px 0 #1C1917", cursor: "pointer", textAlign: "left", width: "100%" }}
+                    >
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8482C", flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: isToday ? "#E8482C" : "#8A8278", marginTop: 2, fontWeight: 700 }}>
+                          {isToday ? "TODAY" : reviewDate?.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()} · ~45 min
+                        </div>
+                      </div>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        );
+      })()}
 
       {/* Nav controls */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 0" }}>
-        <div style={{ display: "flex", background: "#fff", border: "2px solid #1C1917", borderRadius: 6, overflow: "hidden" }}>
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px 0" }}>
+        <div style={{ display: "flex", background: "#fff", border: "2px solid #1C1917", borderRadius: 8, overflow: "hidden" }}>
           {(["week", "day"] as const).map(m => (
-            <button key={m} onClick={() => setViewMode(m)} style={{ padding: "4px 10px", fontFamily: "var(--font-mono)", fontSize: 9, fontWeight: 700, cursor: "pointer", border: "none", background: viewMode === m ? "#1C1917" : "#fff", color: viewMode === m ? "#fff" : "#8A8278", letterSpacing: 0.5 }}>
+            <button key={m} onClick={() => setViewMode(m)} style={{ padding: "8px 16px", fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700, cursor: "pointer", border: "none", background: viewMode === m ? "#1C1917" : "#fff", color: viewMode === m ? "#fff" : "#8A8278", letterSpacing: 0.5 }}>
               {m.toUpperCase()}
             </button>
           ))}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={() => viewMode === "week" ? setWeekOffset((o) => o - 1) : setDayOffset((o) => o - 1)}
-            style={{ width: 28, height: 28, borderRadius: 6, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
+            style={{ width: 36, height: 36, borderRadius: 8, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278", letterSpacing: 0.5, textAlign: "center", minWidth: viewMode === "week" ? 120 : 90 }}>
             {viewMode === "week" ? weekLabel : dayLabel}
           </div>
           <button
             onClick={() => viewMode === "week" ? setWeekOffset((o) => o + 1) : setDayOffset((o) => o + 1)}
-            style={{ width: 28, height: 28, borderRadius: 6, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
+            style={{ width: 36, height: 36, borderRadius: 8, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
           </button>
         </div>
       </div>
@@ -523,12 +540,14 @@ function MobileCalendar({
                       ))}
                       {daySessions.map((ps, si) => {
                         const isCompleted = ps.status === "completed";
+                        const sessionTopic = topics?.find(t => t._id === ps.topicId);
+                        const sessionLabel = sessionTopic ? `${sessionTopic.name} · S${ps.sessionNumber}` : `Session ${ps.sessionNumber}`;
                         return (
                           <button
                             key={ps._id}
                             onClick={() => openEvent({
                               type: "session",
-                              label: `Session ${ps.sessionNumber}`,
+                              label: sessionLabel,
                               startMs: ps.scheduledAt,
                               endMs: ps.scheduledAt + ps.cardCount * 60000,
                               color: isCompleted ? "#8A8278" : "#2B7A3E",
@@ -544,7 +563,7 @@ function MobileCalendar({
                           >
                             <div style={{ width: 6, height: 6, borderRadius: "50%", background: isCompleted ? "#8A8278" : "#2B7A3E", flexShrink: 0 }} />
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 600, color: isCompleted ? "#8A8278" : "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isCompleted ? "line-through" : "none" }}>Session {ps.sessionNumber}</div>
+                              <div style={{ fontSize: 12, fontWeight: 600, color: isCompleted ? "#8A8278" : "#1C1917", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: isCompleted ? "line-through" : "none" }}>{sessionLabel}</div>
                               <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: isCompleted ? "#8A8278" : "#2B7A3E", marginTop: 1 }}>{isCompleted ? "DONE" : "SESSION"} · {fmtPeriod(ps.scheduledAt, ps.scheduledAt + ps.cardCount * 60000)}</div>
                             </div>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
@@ -627,18 +646,22 @@ function MobileCalendar({
                 startMs: t.nextReview!, endMs: t.nextReview! + 0.75 * 3600000,
                 topicId: t._id, courseId: t.courseId,
               })),
-              ...daySessions.map(ps => ({
-                hour: new Date(ps.scheduledAt).getHours(),
-                minute: new Date(ps.scheduledAt).getMinutes(),
-                type: "session" as const,
-                label: `Session ${ps.sessionNumber}`, sublabel: `${ps.cardCount} cards`,
-                color: ps.status === "completed" ? "#8A8278" : "#2B7A3E",
-                startMs: ps.scheduledAt, endMs: ps.scheduledAt + ps.cardCount * 60000,
-                completed: ps.status === "completed",
-                topicId: ps.topicId,
-                sessionNumber: ps.sessionNumber, cardCount: ps.cardCount, sessionStatus: ps.status,
-                sessionId: ps._id, programId: ps.programId,
-              })),
+              ...daySessions.map(ps => {
+                const psTopic = topics?.find(t => t._id === ps.topicId);
+                const psLabel = psTopic ? `${psTopic.name} · S${ps.sessionNumber}` : `Session ${ps.sessionNumber}`;
+                return {
+                  hour: new Date(ps.scheduledAt).getHours(),
+                  minute: new Date(ps.scheduledAt).getMinutes(),
+                  type: "session" as const,
+                  label: psLabel, sublabel: `${ps.cardCount} cards`,
+                  color: ps.status === "completed" ? "#8A8278" : "#2B7A3E",
+                  startMs: ps.scheduledAt, endMs: ps.scheduledAt + ps.cardCount * 60000,
+                  completed: ps.status === "completed",
+                  topicId: ps.topicId,
+                  sessionNumber: ps.sessionNumber, cardCount: ps.cardCount, sessionStatus: ps.status,
+                  sessionId: ps._id, programId: ps.programId,
+                };
+              }),
               ...dayGEvents.map(ev => {
                 const startStr = ev.start.dateTime ?? ev.start.date;
                 const endStr = ev.end?.dateTime ?? ev.end?.date;

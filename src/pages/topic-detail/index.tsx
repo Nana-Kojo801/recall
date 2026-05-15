@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   computeSessionSchedule,
+  resolveScheduleConflicts,
   DURATION_OPTIONS,
   formatSessionTime,
 } from "@/lib/spaced-repetition/program";
@@ -99,6 +100,7 @@ function ProgramSetupModal({
   const createProgram = useMutation(api.programs.create);
   const createSessions = useMutation(api.programSessions.createBatch);
   const createCalendarEvents = useAction(api.googleCalendar.createProgramEvents);
+  const existingSessions = useQuery(api.programSessions.getAllUpcomingByUser);
 
   const now = Date.now();
   const endMs = (() => {
@@ -110,7 +112,8 @@ function ProgramSetupModal({
   })();
 
   const NUM_SESSIONS = 6;
-  const schedule = computeSessionSchedule(now, endMs, NUM_SESSIONS);
+  const rawSchedule = computeSessionSchedule(now, endMs, NUM_SESSIONS);
+  const schedule = resolveScheduleConflicts(rawSchedule, cardCount, existingSessions ?? []);
 
   const minDate = new Date(now + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -346,6 +349,9 @@ export function TopicDetailPage() {
   const removeAllCards = useMutation(api.flashcards.removeAll);
   const removeUpload = useMutation(api.files.remove);
   const deleteTopicCalEvents = useAction(api.googleCalendar.deleteTopicEvents);
+  const cancelProgram = useMutation(api.programs.cancel);
+  const deleteSessionsByProgram = useMutation(api.programSessions.deleteByProgram);
+  const deleteCalendarEvents = useAction(api.googleCalendar.deleteCalendarEvents);
 
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
@@ -361,6 +367,8 @@ export function TopicDetailPage() {
   const [deletingAllCards, setDeletingAllCards] = useState(false);
   const [deletingUploadId, setDeletingUploadId] = useState<string | null>(null);
   const [freeStudyOpen, setFreeStudyOpen] = useState(false);
+  const [stopProgramOpen, setStopProgramOpen] = useState(false);
+  const [stoppingProgram, setStoppingProgram] = useState(false);
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
   const [genStatus, setGenStatus] = useState(() =>
     topicId && generationState.topicId === topicId ? generationState.status : "idle"
@@ -434,6 +442,21 @@ export function TopicDetailPage() {
   function handleProgramStarted(programId: Id<"programs">, firstSessionId: Id<"programSessions">) {
     setProgramOpen(false);
     navigate(`/courses/${courseId}/topics/${topicId}/study?programId=${programId}&sessionId=${firstSessionId}`);
+  }
+
+  async function handleStopProgram() {
+    if (!activeProgram) return;
+    setStoppingProgram(true);
+    try {
+      const calEventIds = await deleteSessionsByProgram({ programId: activeProgram._id });
+      await cancelProgram({ programId: activeProgram._id });
+      if (calEventIds.length > 0) {
+        await deleteCalendarEvents({ calendarEventIds: calEventIds }).catch(() => {});
+      }
+      setStopProgramOpen(false);
+    } finally {
+      setStoppingProgram(false);
+    }
   }
 
   async function handleDeleteAllCards() {
@@ -661,9 +684,17 @@ export function TopicDetailPage() {
                 <h2 className="text-[10px] font-bold tracking-[1.5px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "#8A8278" }}>
                   Study Program
                 </h2>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278" }}>
-                  ends {new Date(activeProgram.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </span>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278" }}>
+                    ends {new Date(activeProgram.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                  <button
+                    onClick={() => setStopProgramOpen(true)}
+                    style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#E8482C", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  >
+                    Stop
+                  </button>
+                </div>
               </div>
               <SessionScheduleList programId={activeProgram._id} />
             </motion.div>
@@ -879,9 +910,17 @@ export function TopicDetailPage() {
                 <div style={{ background: "#fff", border: "2px solid #1C1917", borderRadius: 14, boxShadow: "4px 4px 0 #1C1917", padding: 16 }}>
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
                     <span style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 800, color: "#1C1917" }}>Study Program</span>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278" }}>
-                      ends {new Date(activeProgram.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </span>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "#8A8278" }}>
+                        ends {new Date(activeProgram.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
+                      <button
+                        onClick={() => setStopProgramOpen(true)}
+                        style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#E8482C", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      >
+                        Stop program
+                      </button>
+                    </div>
                   </div>
                   <SessionScheduleList programId={activeProgram._id} />
                 </div>
@@ -984,6 +1023,21 @@ export function TopicDetailPage() {
               Create Study Program Instead
             </button>
           )}
+        </div>
+      </BottomSheet>
+
+      {/* Stop program confirmation */}
+      <BottomSheet open={stopProgramOpen} onOpenChange={setStopProgramOpen} title="Stop study program?">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p style={{ fontSize: 14, color: "#4A4642", lineHeight: 1.5, margin: 0 }}>
+            This will delete all remaining sessions and remove them from Google Calendar. This cannot be undone.
+          </p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Button variant="secondary" className="flex-1" onClick={() => setStopProgramOpen(false)}>Cancel</Button>
+            <Button variant="danger" className="flex-1" disabled={stoppingProgram} onClick={handleStopProgram}>
+              {stoppingProgram ? "Stopping…" : "Stop program"}
+            </Button>
+          </div>
         </div>
       </BottomSheet>
 

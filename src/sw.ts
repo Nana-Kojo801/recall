@@ -15,12 +15,20 @@ self.addEventListener("push", (event) => {
     return;
   }
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: data.icon,
-      tag: data.tag,
-      badge: "/favicon.svg",
-    })
+    (async () => {
+      // Notify any open clients to play the custom sound
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of clients) {
+        client.postMessage({ type: "PLAY_NOTIFICATION_SOUND" });
+      }
+      await self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: "/icons/icon-192x192.png",
+        badge: "/icons/icon-96x96.png",
+        tag: data.tag,
+        silent: true,
+      });
+    })()
   );
 });
 

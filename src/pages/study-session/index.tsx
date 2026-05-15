@@ -285,7 +285,7 @@ export function StudySessionPage() {
       {/* Mobile */}
       <div className="flex flex-col md:hidden min-h-svh" style={{ background: "#F5EFE2" }}>
         {/* Exit row */}
-        <div className="flex px-4 pt-10 pb-2">
+        <div className="flex items-center justify-between px-4 pt-10 pb-2">
           <button
             onClick={() => navigate(-1)}
             className="w-9 h-9 rounded-lg flex items-center justify-center"
@@ -295,21 +295,23 @@ export function StudySessionPage() {
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
+          {programId && currentProgramSession && (
+            <div style={{ padding: "4px 12px", background: "#3B5BDB", color: "#fff", borderRadius: 999, fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 10, letterSpacing: 1, textTransform: "uppercase", border: "1.5px solid #1C1917", boxShadow: "2px 2px 0 #1C1917" }}>
+              SESSION {currentProgramSession.sessionNumber}
+            </div>
+          )}
         </div>
         {/* Topic heading */}
         <div className="px-5 pb-2">
           <p className="text-[10px] font-bold tracking-[1.5px] uppercase mb-1" style={{ fontFamily: "var(--font-mono)", color: "#8A8278" }}>
-            {course?.code}{programId && currentProgramSession && ` · SESSION ${currentProgramSession.sessionNumber}`}
+            {course?.code}
           </p>
           <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 900, color: "#1C1917", letterSpacing: -0.5, lineHeight: 1.1, margin: 0 }}>
             {topic?.name}
           </h1>
         </div>
         {/* Progress badge */}
-        <div className="flex items-center justify-between px-5 pb-4">
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#8A8278", letterSpacing: 1 }}>
-            {programId && currentProgramSession ? `SESSION ${currentProgramSession.sessionNumber}` : "FREE STUDY"}
-          </div>
+        <div className="flex items-center justify-end px-5 pb-4">
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ padding: "5px 10px", background: "#fff", color: "#8A8278", borderRadius: 8, fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 12, border: "1.5px solid rgba(28,25,23,0.15)", letterSpacing: 0.5 }}>
               {formatElapsed(elapsedSecs)}

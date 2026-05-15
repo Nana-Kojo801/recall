@@ -279,3 +279,20 @@ export const updateSessionEvent = action({
     }
   },
 });
+
+export const deleteCalendarEvents = action({
+  args: { calendarEventIds: v.array(v.string()) },
+  handler: async (ctx, args): Promise<void> => {
+    const authUserId = await getAuthUserId(ctx);
+    if (!authUserId) return;
+    const user = (await ctx.runQuery(api.users.getMe)) as Doc<"users"> | null;
+    if (!user?.googleAccessToken) return;
+    for (const eventId of args.calendarEventIds) {
+      try {
+        await calendarWithRefresh(ctx, authUserId, user, "DELETE", `/calendars/primary/events/${eventId}`);
+      } catch {
+        // Non-fatal — event may already be deleted
+      }
+    }
+  },
+});

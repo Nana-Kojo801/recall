@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { api } from "@/../convex/_generated/api";
 import { BottomNav } from "@/components/ui/bottom-nav";
 import { Sidebar } from "@/components/layout/sidebar";
+import { RightSheet } from "@/components/ui/right-sheet";
 import { formatSessionTime } from "@/lib/spaced-repetition/program";
 
 function KStar({ size = 16, color = "#E8482C" }: { size?: number; color?: string }) {
@@ -206,6 +207,115 @@ function DesktopCourseCard({
   );
 }
 
+type AppNotification = {
+  _id: string;
+  title: string;
+  body: string;
+  type: string;
+  isRead: boolean;
+  createdAt: number;
+};
+
+function NotificationsSheetContent({
+  notifications,
+  unreadCount,
+  onMarkRead,
+  onMarkAllRead,
+  onClearAll,
+}: {
+  notifications: AppNotification[] | undefined;
+  unreadCount: number;
+  onMarkRead: (id: string) => void;
+  onMarkAllRead: () => void;
+  onClearAll: () => void;
+}) {
+  const typeColor = (type: string) => {
+    if (type === "session_due") return "#2B7A3E";
+    if (type === "session_warning") return "#F4B400";
+    if (type === "review_due") return "#E8482C";
+    return "#3B5BDB";
+  };
+  const typeLabel = (type: string) => {
+    if (type === "session_due") return "SESSION";
+    if (type === "session_warning") return "WARNING";
+    if (type === "review_due") return "REVIEW";
+    return "INFO";
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* Actions bar */}
+      {(notifications?.length ?? 0) > 0 && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          {unreadCount > 0 && (
+            <button
+              onClick={onMarkAllRead}
+              style={{ flex: 1, padding: "8px 12px", background: "#fff", border: "2px solid #1C1917", borderRadius: 8, boxShadow: "2px 2px 0 #1C1917", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, cursor: "pointer" }}
+            >
+              Mark all read
+            </button>
+          )}
+          <button
+            onClick={onClearAll}
+            style={{ flex: 1, padding: "8px 12px", background: "#fff", border: "2px solid #E8482C", borderRadius: 8, boxShadow: "2px 2px 0 #E8482C", fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, color: "#E8482C", cursor: "pointer" }}
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {!notifications || notifications.length === 0 ? (
+        <div style={{ padding: "40px 0", textAlign: "center" }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: "#fff", border: "2px solid #1C1917", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8A8278" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <div style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 700, color: "#1C1917" }}>All clear</div>
+          <div style={{ fontSize: 13, color: "#8A8278", marginTop: 4 }}>No notifications yet.</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {notifications.map(n => (
+            <div
+              key={n._id}
+              style={{ padding: 12, borderRadius: 12, background: n.isRead ? "transparent" : "#fff", border: "2px solid #1C1917", boxShadow: n.isRead ? "none" : "2px 2px 0 #1C1917", opacity: n.isRead ? 0.65 : 1 }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 8, fontWeight: 700, padding: "1px 5px", borderRadius: 4, background: typeColor(n.type), color: n.type === "session_warning" ? "#1C1917" : "#fff", border: "1px solid #1C1917" }}>
+                      {typeLabel(n.type)}
+                    </span>
+                    {!n.isRead && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#E8482C", flexShrink: 0 }} />}
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1917" }}>{n.title}</div>
+                  <div style={{ fontSize: 12, color: "#4A4642", marginTop: 2 }}>{n.body}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "#8A8278", marginTop: 4 }}>
+                    {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </div>
+                </div>
+                {!n.isRead && (
+                  <button
+                    onClick={() => onMarkRead(n._id)}
+                    style={{ width: 28, height: 28, borderRadius: 6, background: "#fff", border: "1.5px solid rgba(28,25,23,0.2)", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
+                    title="Mark as read"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const user = useQuery(api.users.getMe);
@@ -219,6 +329,22 @@ export function HomePage() {
   const allUpcomingPS = useQuery(api.programSessions.getAllUpcomingByUser);
   const [tick, setTick] = useState(0);
   const sessions = useQuery(api.studySessions.listByUser);
+
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifications = useQuery(api.notifications.listByUser);
+  const unreadCount = useQuery(api.notifications.unreadCount) ?? 0;
+  const markRead = useMutation(api.notifications.markRead);
+  const markAllRead = useMutation(api.notifications.markAllRead);
+  const clearAll = useMutation(api.notifications.clearAll);
+
+  useEffect(() => {
+    if (!("setAppBadge" in navigator)) return;
+    if (unreadCount > 0) {
+      void (navigator as Navigator & { setAppBadge?: (n: number) => void }).setAppBadge?.(unreadCount);
+    } else {
+      void (navigator as Navigator & { clearAppBadge?: () => void }).clearAppBadge?.();
+    }
+  }, [unreadCount]);
 
   const [stableCoursesEmpty, setStableCoursesEmpty] = useState(false);
   useEffect(() => {
@@ -345,22 +471,39 @@ export function HomePage() {
                   </span>
                 </div>
               </div>
-              {user?.imageUrl ? (
-                <img
-                  src={user.imageUrl}
-                  alt={user.name ?? ""}
-                  style={{ width: 46, height: 46, borderRadius: 14, border: "2.5px solid #1C1917", boxShadow: "3px 3px 0 #1C1917", objectFit: "cover" }}
-                />
-              ) : (
-                <div style={{
-                  width: 46, height: 46, borderRadius: 14, background: "#C93FA9",
-                  border: "2.5px solid #1C1917", boxShadow: "3px 3px 0 #1C1917",
-                  display: "grid", placeItems: "center",
-                  color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: 16,
-                }}>
-                  {initials}
-                </div>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button
+                  onClick={() => setNotifOpen(true)}
+                  style={{ position: "relative", width: 40, height: 40, borderRadius: 12, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
+                  aria-label="Notifications"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                  {unreadCount > 0 && (
+                    <div style={{ position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: "#E8482C", border: "1.5px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, color: "#fff", fontFamily: "var(--font-mono)" }}>{unreadCount > 99 ? "99+" : unreadCount}</span>
+                    </div>
+                  )}
+                </button>
+                {user?.imageUrl ? (
+                  <img
+                    src={user.imageUrl}
+                    alt={user.name ?? ""}
+                    style={{ width: 46, height: 46, borderRadius: 14, border: "2.5px solid #1C1917", boxShadow: "3px 3px 0 #1C1917", objectFit: "cover" }}
+                  />
+                ) : (
+                  <div style={{
+                    width: 46, height: 46, borderRadius: 14, background: "#C93FA9",
+                    border: "2.5px solid #1C1917", boxShadow: "3px 3px 0 #1C1917",
+                    display: "grid", placeItems: "center",
+                    color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: 16,
+                  }}>
+                    {initials}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Due Today card */}
@@ -545,6 +688,17 @@ export function HomePage() {
           <div style={{ height: 16 }} />
         </div>
 
+        {/* Notifications sheet (mobile) */}
+        <RightSheet open={notifOpen} onOpenChange={setNotifOpen} title="Notifications" width="100vw">
+          <NotificationsSheetContent
+            notifications={notifications}
+            unreadCount={unreadCount}
+            onMarkRead={(id) => void markRead({ notificationId: id as never })}
+            onMarkAllRead={() => void markAllRead({})}
+            onClearAll={() => void clearAll({})}
+          />
+        </RightSheet>
+
         <BottomNav />
       </div>
 
@@ -595,6 +749,30 @@ export function HomePage() {
               >
                 {getGreeting()}, {firstName}.
               </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button
+                onClick={() => setNotifOpen(true)}
+                style={{ position: "relative", width: 38, height: 38, borderRadius: 10, background: "#fff", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", cursor: "pointer" }}
+                aria-label="Notifications"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1C1917" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                {unreadCount > 0 && (
+                  <div style={{ position: "absolute", top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, background: "#E8482C", border: "1.5px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: "#fff", fontFamily: "var(--font-mono)" }}>{unreadCount > 99 ? "99+" : unreadCount}</span>
+                  </div>
+                )}
+              </button>
+              {user?.imageUrl ? (
+                <img src={user.imageUrl} alt={user.name ?? ""} style={{ width: 38, height: 38, borderRadius: 10, border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", objectFit: "cover" }} />
+              ) : (
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: "#C93FA9", border: "2px solid #1C1917", boxShadow: "2px 2px 0 #1C1917", display: "grid", placeItems: "center", color: "#fff", fontFamily: "var(--font-serif)", fontWeight: 700, fontSize: 14 }}>
+                  {initials}
+                </div>
+              )}
             </div>
           </div>
 
@@ -850,6 +1028,17 @@ export function HomePage() {
               </div>
             </div>
           )}
+
+          {/* Notifications sheet (desktop) */}
+          <RightSheet open={notifOpen} onOpenChange={setNotifOpen} title="Notifications" width={380}>
+            <NotificationsSheetContent
+              notifications={notifications}
+              unreadCount={unreadCount}
+              onMarkRead={(id) => void markRead({ notificationId: id as never })}
+              onMarkAllRead={() => void markAllRead({})}
+              onClearAll={() => void clearAll({})}
+            />
+          </RightSheet>
 
           {/* Courses row */}
           <div style={{ padding: "0 28px 28px" }}>

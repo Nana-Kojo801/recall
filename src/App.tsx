@@ -68,6 +68,18 @@ function SessionNotifier() {
   const vapidKey = useQuery(api.push.getVapidPublicKey);
   const subscribePush = useMutation(api.push.subscribe);
 
+  // Listen for SW "PLAY_NOTIFICATION_SOUND" messages (mobile push path)
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "PLAY_NOTIFICATION_SOUND") {
+        playNotificationSound();
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
+  }, []);
+
   useEffect(() => {
     if (!("Notification" in window)) return;
     if (Notification.permission === "default") {

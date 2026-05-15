@@ -15,6 +15,32 @@ export function computeSessionSchedule(startMs: number, endMs: number, numSessio
   return OFFSETS_6.slice(0, numSessions).map((r) => Math.round(startMs + r * duration));
 }
 
+export function resolveScheduleConflicts(
+  schedule: number[],
+  cardCount: number,
+  existingSessions: Array<{ scheduledAt: number; cardCount: number }>,
+): number[] {
+  const durMs = cardCount * 60_000;
+  const existing = existingSessions
+    .map(s => ({ start: s.scheduledAt, end: s.scheduledAt + s.cardCount * 60_000 }))
+    .sort((a, b) => a.start - b.start);
+
+  return schedule.map(t => {
+    let start = t;
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const ev of existing) {
+        if (start < ev.end && start + durMs > ev.start) {
+          start = ev.end + 60_000;
+          changed = true;
+        }
+      }
+    }
+    return start;
+  });
+}
+
 export function adjustNextSessionTime(
   currentScheduledAt: number,
   now: number,

@@ -187,6 +187,24 @@ export const getAllByUser = query({
   },
 });
 
+export const deleteByProgram = mutation({
+  args: { programId: v.id("programs") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+    const sessions = await ctx.db
+      .query("programSessions")
+      .withIndex("by_program", (q) => q.eq("programId", args.programId))
+      .collect();
+    const calendarEventIds: string[] = [];
+    for (const s of sessions) {
+      if (s.calendarEventId) calendarEventIds.push(s.calendarEventId);
+      await ctx.db.delete(s._id);
+    }
+    return calendarEventIds;
+  },
+});
+
 export const setCalendarEvent = mutation({
   args: {
     sessionId: v.id("programSessions"),

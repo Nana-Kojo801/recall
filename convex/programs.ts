@@ -66,3 +66,14 @@ export const complete = mutation({
     await ctx.db.patch(args.programId, { status: "completed" });
   },
 });
+
+export const cancel = mutation({
+  args: { programId: v.id("programs") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Unauthenticated");
+    const program = await ctx.db.get(args.programId);
+    if (!program || program.userId !== userId) throw new Error("Not found");
+    await ctx.db.patch(args.programId, { status: "cancelled" });
+  },
+});

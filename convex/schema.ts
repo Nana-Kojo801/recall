@@ -57,7 +57,7 @@ export default defineSchema({
     endDate: v.number(),
     currentSession: v.number(),
     totalSessions: v.number(),
-    status: v.union(v.literal("active"), v.literal("completed"), v.literal("paused")),
+    status: v.union(v.literal("active"), v.literal("completed"), v.literal("paused"), v.literal("cancelled")),
   })
     .index("by_topic", ["topicId"])
     .index("by_user", ["userId"]),
@@ -96,6 +96,18 @@ export default defineSchema({
     p256dh: v.string(),
     auth: v.string(),
   }).index("by_user", ["userId"]),
+
+  notifications: defineTable({
+    userId: v.string(),
+    title: v.string(),
+    body: v.string(),
+    type: v.union(v.literal("session_due"), v.literal("session_warning"), v.literal("review_due"), v.literal("general")),
+    isRead: v.boolean(),
+    createdAt: v.number(),
+    link: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_read", ["userId", "isRead"]),
 
   materialUploads: defineTable({
     topicId: v.id("topics"),
